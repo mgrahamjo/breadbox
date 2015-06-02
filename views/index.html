@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+<head>
+    <title>Protein</title>
+</head>
+<body>
+    <h1>Protein</h1>
+    <h3>A tiny MVC framework for Node</h3>
+
+    &lcub;&lcub;if show&rcub;&rcub;<br><br>
+
+        &lt;ul&gt;<br><br>
+        &lcub;&lcub;for stuff.things as thing&rcub;&rcub;<br><br>
+            &lt;li&gt;I like &lcub;&lcub;thing&rcub;&rcub;!&lt;/li&gt;<br><br>
+        &lcub;&lcub;endfor&rcub;&rcub;<br><br>
+        &lt;ul&gt;<br><br>
+
+    &lcub;&lcub;endif&rcub;&rcub;<br><br>
+
+    &lt;div&gt;2 * 4 = &lcub;&lcub; 2 * 4 &rcub;&rcub;&lt;/div&gt;<br><br>
+
+---------------------<br>
+renders this:<br>
+---------------------<br><br>
+
+    {{if show}}
+
+        <ul>
+        {{for stuff.things as thing}}
+            <li>I like {{thing}}!</li>
+        {{endfor}}
+        <ul>
+
+    {{endif}}
+
+    <div>2 * 4 = {{ 2 * 4 }}</div>
+
+</body>
+</html>

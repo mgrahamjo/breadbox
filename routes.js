@@ -1,12 +1,17 @@
 'use strict';
 
+var db = require('./lib/db');
+
 module.exports = {
 
-    '/index': {
-        stuff: {
-            things: ['drugs', 'money', 'ladies']
-        },
-        show: true
+    '/index': function(response) {
+
+        db.get('index').then(function(data) {
+
+            db.put('index', 'count', data.count + 1).then(function(){
+                response.resolve(data);
+            });
+        });
     }
 
 };

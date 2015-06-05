@@ -2,6 +2,6 @@
 
 A tiny Node JS MVC framework with no dependencies.
 
-Currently templates support loops over arrays, logical if blocks, and interpolated raw JavaScript, which enables partial includes via require().
+Currently templates support loops over arrays, logical if blocks, partial includes, and interpolated raw JavaScript.
 
-Routes are defined in routes.js as properties of a simple array-like object with a relative path as the key and a context object - similar to $scope in AngularJS - as the value.
+Routes are defined in routes.js as properties of a simple array-like object, where each path is mapped to a controller function that asyncronously resolves the request.

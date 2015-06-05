@@ -1,0 +1,22 @@
+{{include head}}
+
+<h1>Data</h1>
+
+{{for collections as collection}}
+
+    <h4>{{collection.name}}</h4>
+
+    {{for collection.properties as property}}
+
+        <p>
+            <label>{{property.key}}: </label>
+            <input type="text" value="{{property.value}}"/>
+        </p>
+
+    {{endfor}}
+
+{{endfor}}
+
+</body>
+
+</html>

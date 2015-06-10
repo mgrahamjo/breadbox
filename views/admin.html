@@ -1,21 +1,39 @@
 {{include head}}
 
+<style type="text/css">
+    textarea {
+      width: 100%;
+      position: absolute;
+      left: 0;
+      border: 0;
+      padding-left: 20px;
+      box-sizing: border-box;
+      height: 500px;
+      border-bottom: 1px solid rgb(216, 216, 216);
+    }
+</style>
+
 <h1>Data</h1>
 
 {{for collections as collection}}
 
-    <h4>{{collection.name}}</h4>
-
-    {{for collection.properties as property}}
-
-        <p>
-            <label>{{property.key}}: </label>
-            <input type="text" value="{{property.value}}"/>
-        </p>
-
-    {{endfor}}
+    <textarea width="100%" height="100%">{{collection}}</textarea>
 
 {{endfor}}
+
+{{if show}}
+
+    {{if show}}
+        markup 1
+    {{endif}}
+
+    {{if show}}
+        markup 2
+    {{endif}}
+
+    markup 3
+
+{{endif}}
 
 </body>
 

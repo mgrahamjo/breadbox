@@ -16,22 +16,6 @@ module.exports = {
     },
 
     '/admin': function(response) {
-        
-        function getProperties(data, properties, path) {
-
-            Object.keys(data).forEach(function(key) {
-                if (data.hasOwnProperty(key)) {
-                    if (typeof data[key] !== 'object') {
-                        properties.push({
-                            key: path ? path + '.' + key : key,
-                            value: data[key]
-                        })
-                    } else {
-                        getProperties(data[key], properties, path ? path + '.' + key : key);
-                    }
-                }
-            });
-        }
 
         var collections = [];
 
@@ -41,17 +25,10 @@ module.exports = {
 
                 db.get(file.replace('.json', '')).then(function(data) {
 
-                    var collection = {
-                        name: file,
-                        properties: []
-                    };
-
-                    getProperties(data, collection.properties);
-
-                    collections.push(collection);
+                    collections.push(JSON.stringify(data, null, 4));
 
                     if (index === files.length - 1) {
-                        response.resolve({ collections: collections });
+                        response.resolve({ collections: collections, show: true });
                     }
                 });
             });

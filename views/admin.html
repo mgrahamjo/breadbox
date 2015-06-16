@@ -15,23 +15,21 @@
 
 <h1>Data</h1>
 
-{{for collections as collection}}
+{{if collections}}
 
-    <textarea width="100%" height="100%">{{collection}}</textarea>
+  {{for collections as collection}}
 
-{{endfor}}
+      <h1><a href="/admin/{{collection}}">{{collection}}</a></h1>
 
-{{if show}}
+  {{endfor}}
 
-    {{if show}}
-        markup 1
-    {{endif}}
+{{endif}}
 
-    {{if show}}
-        markup 2
-    {{endif}}
+{{if json}}
 
-    markup 3
+<a href="/admin">Back</a>
+
+<textarea width="100%" height="100%">{{json}}</textarea>
 
 {{endif}}
 

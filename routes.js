@@ -23,15 +23,20 @@ module.exports = {
 
             files.forEach(function(file, index) {
 
-                db.get(file.replace('.json', '')).then(function(data) {
+                collections.push(file.replace('.json', ''));
 
-                    collections.push(JSON.stringify(data, null, 4));
-
-                    if (index === files.length - 1) {
-                        response.resolve({ collections: collections, show: true });
-                    }
-                });
+                if (index === files.length - 1) {
+                    response.resolve({ collections: collections });
+                }
             });
+        });
+    },
+
+    '/admin/{{collection}}': function(response, request) {
+
+        db.get(request.params.collection).then(function(data) {
+
+            response.resolve({ json: JSON.stringify(data, null, 4) });
         });
     }
 

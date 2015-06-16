@@ -36,7 +36,7 @@ module.exports = {
 
         db.get(request.params.collection).then(function(data) {
 
-            response.resolve({ json: JSON.stringify(data, null, 4) });
+            response.resolve({ json: JSON.stringify(data, null, 4), urlParam: request.params.urlParam });
         });
     }
 

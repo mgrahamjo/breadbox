@@ -69,7 +69,7 @@ module.exports = {
     		items: ['apples', 'oranges', 'bananas']
     	};
 
-        response.resolve([context, 'fruits.html']);
+        response.resolve(context, 'fruits.html');
     }
 };
 

@@ -1,16 +1,12 @@
-{{include head}}
+{{include partials/head}}
 
 <h1>Data</h1>
 
-{{if collections}}
+{{for collections as collection}}
 
-  {{for collections as collection}}
+	<h1><a href="/admin/{{collection}}">{{collection}}</a></h1>
 
-    <h1><a href="/admin/{{collection}}">{{collection}}</a></h1>
-
-  {{endfor}}
-
-{{endif}}
+{{endfor}}
 
 </body>
 

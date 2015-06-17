@@ -9,7 +9,7 @@ module.exports = {
 
         db.get('index').then(function(data) {
 
-            db.put('index', 'count', data.count + 1).then(function(){
+            db.put('index', data.count + 1, 'count').then(function(){
                 response.resolve(data);
             });
         });

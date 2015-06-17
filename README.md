@@ -4,13 +4,13 @@ A tiny Node JS MVC framework, currently in development.
 
 ## Templates
 
-Templates go in the `views/` folder. Partials go in the `views/partials/` folder.
+Templates go in the `views/` folder.
 
 ### Includes
 
 `{{include <filename>}}` includes a partial view with the given filename ('.html' extension is assumed). 
 
-`{{include head}}` would include the content from `/views/partials/head.html`.
+`{{include partials/head}}` would include the content from `/views/partials/head.html`.
 
 ### Loops
 
@@ -79,7 +79,7 @@ Now, the context could be used in fruits.html like this:
 
 ```
 <ul>
-{{for fruit in items}}
+{{for items as fruit}}
 	<li>{{fruit}}</li>
 {{endfor}}
 </ul>

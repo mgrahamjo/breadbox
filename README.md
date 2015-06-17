@@ -4,7 +4,7 @@ A tiny Node JS MVC framework, currently in development.
 
 ## Templates
 
-Templates go in the views folder.
+Templates go in the `views/` folder. Partials go in the `views/partials/` folder.
 
 ### Includes
 
@@ -96,7 +96,7 @@ Which would render the following HTML:
 
 ### Defining URL parameters
 
-Sometimes you don't know exactly what the URL will look like when you want to render a certain template. Consider a blog in which each post resides at /posts/<id>.
+Sometimes you don't know exactly what the URL will look like when you want to render a certain template. Consider a blog in which each post resides at the URL `/posts/<id>`.
 
 In this case, you need to use a placeholder in the route, with the expectation that it will map to a blog post ID. 
 

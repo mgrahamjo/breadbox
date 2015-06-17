@@ -56,7 +56,7 @@ The function is passed response and request arguments. To send a response, resol
 
 If you don't specify a template, Protein will look for a template that matches the name of the route. In the example above, it would look for `views/index.html`. 
 
-To specify a template other than the default, resolve the response with an array containing the context object and the template path (relative to the views folder).
+To specify a template other than the default, pass the template path (relative to the views folder) as the second argument when you resolve the response.
 
 For example:
 

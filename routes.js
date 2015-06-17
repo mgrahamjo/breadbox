@@ -40,7 +40,7 @@ module.exports = {
 
         db.get(request.params.collection).then(function(data) {
 
-            response.resolve([{ json: JSON.stringify(data, null, 4), collection: request.params.collection }, 'collection.html']);
+            response.resolve({ json: JSON.stringify(data, null, 4), collection: request.params.collection }, 'collection.html');
         });
     }
 

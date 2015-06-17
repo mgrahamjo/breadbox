@@ -34,9 +34,13 @@ module.exports = {
 
     '/admin/{{collection}}': function(response, request) {
 
+        if (request.body) {
+            db.put(request.params.collection, JSON.parse(request.body.json));
+        }
+
         db.get(request.params.collection).then(function(data) {
 
-            response.resolve([{ json: JSON.stringify(data, null, 4), urlParam: request.params.urlParam }, 'collection.html']);
+            response.resolve([{ json: JSON.stringify(data, null, 4), collection: request.params.collection }, 'collection.html']);
         });
     }
 

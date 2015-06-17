@@ -2,7 +2,7 @@
 
 module.exports = function(grunt) {
 
-  var jsFiles = ['Gruntfile.js', 'index.js', 'routes.js'];
+  var jsFiles = ['*.js', '/**/*.js', '/**/**/*.js'];
 
   grunt.initConfig({
 

@@ -1,35 +1,14 @@
 {{include head}}
 
-<style type="text/css">
-    textarea {
-      width: 100%;
-      position: absolute;
-      left: 0;
-      border: 0;
-      padding-left: 20px;
-      box-sizing: border-box;
-      height: 500px;
-      border-bottom: 1px solid rgb(216, 216, 216);
-    }
-</style>
-
 <h1>Data</h1>
 
 {{if collections}}
 
   {{for collections as collection}}
 
-      <h1><a href="/admin/{{collection}}">{{collection}}</a></h1>
+    <h1><a href="/admin/{{collection}}">{{collection}}</a></h1>
 
   {{endfor}}
-
-{{endif}}
-
-{{if json}}
-
-<a href="/admin">Back</a>
-
-<textarea width="100%" height="100%">{{json}}</textarea>
 
 {{endif}}
 

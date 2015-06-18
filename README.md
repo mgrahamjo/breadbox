@@ -14,7 +14,7 @@ Templates go in the `views/` folder.
 
 ### Loops
 
-`{{for <array> as <key>}}...{{endfor}}` renders the contained content once for each item in the given array. Within that content, `{{<key>}}` will be replaced with the corresponding value in the array.
+`{{for <key> in <array>}}...{{endfor}}` renders the contained content once for each item in the given array. Within that content, `{{<key>}}` will be replaced with the corresponding value in the array.
 
 ### If Blocks
 
@@ -79,7 +79,7 @@ Now, the context could be used in fruits.html like this:
 
 ```
 <ul>
-{{for items as fruit}}
+{{for fruit in items}}
 	<li>{{fruit}}</li>
 {{endfor}}
 </ul>

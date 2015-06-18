@@ -16,7 +16,7 @@
     &lcub;&lcub;if show&rcub;&rcub;<br><br>
 
         &lt;ul&gt;<br><br>
-        &lcub;&lcub;for stuff.things as thing&rcub;&rcub;<br><br>
+        &lcub;&lcub;for thing in stuff.things&rcub;&rcub;<br><br>
             &lt;li&gt;I like &lcub;&lcub;thing&rcub;&rcub;!&lt;/li&gt;<br><br>
         &lcub;&lcub;endfor&rcub;&rcub;<br><br>
         &lt;/ul&gt;<br><br>
@@ -30,7 +30,7 @@
     {{if show}}
 
         <ul>
-        {{for stuff.things as thing}}
+        {{for thing in stuff.things}}
             <li>I like {{thing}}!</li>
         {{endfor}}
         </ul>

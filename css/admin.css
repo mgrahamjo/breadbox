@@ -1,0 +1,101 @@
+body {
+  font-family: 'Lato', sans-serif;
+  margin: 0px;
+  background-color: rgb(40, 41, 45);
+}
+
+textarea {
+  left: 0;
+  position: absolute;
+  width: 100%;
+  height: calc(100% - 100px);
+  border: 0;
+  box-sizing: border-box;
+  border-bottom: 1px solid rgb(216, 216, 216);
+  top: 100px;
+  padding: 0 20px;
+  background-color: transparent;
+  color: rgb(231, 231, 231);
+  font-family: monospace;
+  font-size: 10pt;
+  border: 0;
+  outline: none;
+}
+
+.header {
+  background-color: rgb(37, 37, 37);
+  clear: both;
+  overflow: auto;
+  color: rgb(242, 242, 242);
+  padding: 0 30px;
+  box-shadow: 1px 1px 0px rgb(26, 28, 29);
+  -moz-box-shadow: 1px 1px 0px rgb(26, 28, 29);
+  -webkit-box-shadow: 1px 1px 0px rgb(26, 28, 29);
+}
+
+a {
+	text-decoration: none;
+	color: rgb(0, 158, 255);
+}
+
+.back {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+	background: rgb(38, 39, 42);
+  border: none;
+  padding: 10px 25px;
+  color: white;
+  font-weight: bold;
+  font-size: 12pt;
+}
+
+h1 {
+  float: left;
+}
+
+input {
+  position: fixed;
+  top: calc(100% - 50px);
+  left: 13px;
+  background: rgb(0, 148, 255);
+  border: none;
+  padding: 10px 25px;
+  color: white;
+  font-weight: bold;
+  font-size: 12pt;
+}
+
+.btn:hover {
+	filter: brightness(108%);
+	-moz-filter: brightness(108%);
+	-webkit-filter: brightness(108%);
+	cursor: pointer;
+}
+
+.collection {
+  background-color: rgb(37, 37, 37);
+  display: block;
+  margin: 10px;
+  padding: 15px 20px;
+  font-size: 14pt;
+  color: white;
+  box-shadow: 1px 1px 0px rgb(26, 28, 29);
+  -moz-box-shadow: 1px 1px 0px rgb(26, 28, 29);
+  -webkit-box-shadow: 1px 1px 0px rgb(26, 28, 29);
+}
+
+.saved {
+	position: absolute;
+  width: 140px;
+  left: 50%;
+  margin-left: -70px;
+  background-color: rgb(34, 190, 89);
+  padding: 10px 15px;
+  box-sizing: border-box;
+  top: 20px;
+  text-align: center;
+  border-radius: 2px;
+  -moz-border-radius: 2px;
+  -webkit-border-radius: 2px;
+}

@@ -46,6 +46,8 @@ module.exports = {
 
                 context.json = JSON.stringify(context.json, null, 4);
 
+                context.saved = true;
+
                 response.resolve(context, 'collection.html');
             });
 

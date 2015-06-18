@@ -34,14 +34,30 @@ module.exports = {
 
     '/admin/{{collection}}': function(response, request) {
 
+        var context = {
+            collection: request.params.collection
+        };
+
         if (request.body) {
-            db.put(request.params.collection, JSON.parse(request.body.json));
+
+            context.json = JSON.parse(request.body.json);
+            
+            db.put(request.params.collection, context.json).then(function() {
+
+                context.json = JSON.stringify(context.json, null, 4);
+
+                response.resolve(context, 'collection.html');
+            });
+
+        } else {
+
+            db.get(request.params.collection).then(function(data) {
+
+                context.json = JSON.stringify(data, null, 4);
+
+                response.resolve(context, 'collection.html');
+            });
         }
-
-        db.get(request.params.collection).then(function(data) {
-
-            response.resolve({ json: JSON.stringify(data, null, 4), collection: request.params.collection }, 'collection.html');
-        });
     }
 
 };

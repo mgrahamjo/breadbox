@@ -5,7 +5,11 @@
     <h1>Protein - {{collection}}</h1>
 
     {{if saved}}
-        <div class="saved">Saved!</div>
+        <div class="msg saved">Saved!</div>
+    {{endif}}
+
+    {{if error}}
+        <div class="msg error">{{error}}</div>
     {{endif}}
 
     <a class="btn back" href="/admin">Back</a>

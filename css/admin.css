@@ -1,6 +1,9 @@
 body {
   font-family: 'Lato', sans-serif;
   margin: 0px;
+}
+
+.admin {
   background-color: rgb(40, 41, 45);
 }
 
@@ -85,12 +88,11 @@ input {
   -webkit-box-shadow: 1px 1px 0px rgb(26, 28, 29);
 }
 
-.saved {
+.msg {
 	position: absolute;
-  width: 140px;
+  width: 350px;
   left: 50%;
-  margin-left: -70px;
-  background-color: rgb(34, 190, 89);
+  margin-left: -175px;
   padding: 10px 15px;
   box-sizing: border-box;
   top: 20px;
@@ -98,4 +100,12 @@ input {
   border-radius: 2px;
   -moz-border-radius: 2px;
   -webkit-border-radius: 2px;
+}
+
+.saved {
+  background-color: rgb(34, 190, 89);
+}
+
+.error {
+  background-color: rgb(218, 73, 73);
 }

@@ -25,6 +25,10 @@ textarea {
   outline: none;
 }
 
+textarea.error {
+  color: rgb(218, 73, 73);
+}
+
 .header {
   background-color: rgb(37, 37, 37);
   clear: both;
@@ -106,6 +110,6 @@ input {
   background-color: rgb(34, 190, 89);
 }
 
-.error {
+.msg.error {
   background-color: rgb(218, 73, 73);
 }

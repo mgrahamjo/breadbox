@@ -5,11 +5,11 @@ var db = require('./lib/db'),
 
 module.exports = {
 
-    '/index': function(response) {
+    '/index': function(response, request) {
 
         db.get('index').then(function(data) {
 
-            data.className = 'index';
+            data.className = request.query.query;
 
             db.put('index', data.count + 1, 'count').then(function(){
                 response.resolve(data);
@@ -43,7 +43,7 @@ module.exports = {
 
         if (request.body) {
 
-            // try {
+            //try {
 
                 context.json = JSON.parse(request.body.json);
 
@@ -70,8 +70,6 @@ module.exports = {
             //     });
 
             // }
-            
-            
 
         } else {
 

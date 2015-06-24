@@ -2,7 +2,7 @@
 
 module.exports = function(grunt) {
 
-  var jsFiles = ['*.js', '/**/*.js', '/**/**/*.js'];
+  var jsFiles = ['data/*.js', 'lib/*.js'];
 
   grunt.initConfig({
 

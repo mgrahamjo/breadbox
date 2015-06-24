@@ -24,6 +24,22 @@
 
 </form>
 
+<script>
+
+    var textarea = document.getElementsByTagName('textarea');
+
+    textarea[0].addEventListener('keyup', function() {
+        try {
+            JSON.parse(textarea[0].value);
+            textarea[0].classList.remove('error');
+        } catch(err) {
+            console.error(err);
+            textarea[0].classList.add('error');
+        }
+    });
+
+</script>
+
 </body>
 
 </html>

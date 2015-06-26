@@ -1,4 +1,4 @@
-# protein
+# Breadbox
 
 A tiny Node JS MVC framework, currently in development. 
 
@@ -23,6 +23,8 @@ Templates go in the `views/` folder.
 ### Variables
 
 `{{<variable>}}` will be replaced with the value of the corresponding variable.
+
+Variables are automatically HTML escaped. To bypass this security measure, use `{{<variable> | safe }}`.
 
 ## Routes
 
@@ -54,7 +56,7 @@ The function is passed response and request arguments. To send a response, resol
 
 ### Mapping a URL to a template with a context object
 
-If you don't specify a template, Protein will look for a template that matches the name of the route. In the example above, it would look for `views/index.html`. 
+If you don't specify a template, Breadbox will look for a template that matches the name of the route. In the example above, it would look for `views/index.html`. 
 
 To specify a template other than the default, pass the template path (relative to the views folder) as the second argument when you resolve the response.
 
@@ -117,13 +119,13 @@ module.exports = {
 
 The parameter will be available as a property of request.params. 
 
-Note that in this example we did not pass a template path to the response. Protein is smart enough to know not to look for `views/posts/{{id}}.html`, and will try rendering `views/posts.html` instead.
+Note that in this example we did not pass a template path to the response. Breadbox is smart enough to know not to look for `views/posts/{{id}}.html`, and will try rendering `views/posts.html` instead.
 
 ## Accessing data
 
-Protein ships with an extremely lightweight file-based data access layer. Feel free to use any database engine instead.
+Breadbox ships with an extremely lightweight file-based data access layer. Feel free to use any database engine instead.
 
-The Protein DB has two methods: get and put. Both of them return promise objects that will be resolved after execution.
+The Breadbox DB has two methods: get and put. Both of them return promise objects that will be resolved after execution.
 
 ### Getting data
 
@@ -154,7 +156,7 @@ module.exports = {
 
 ### Saving data
 
-A common issue with JSON-based storage is that you could get an object, someone else could modify one part of it, you could modify another part of it, and when you save, the other person's change is overwritten. Protein avoids this by allowing you to specify a specific property of the object that should be modified when saving data.
+A common issue with JSON-based storage is that you could get an object, someone else could modify one part of it, you could modify another part of it, and when you save, the other person's change is overwritten. Breadbox avoids this by allowing you to specify a specific property of the object that should be modified when saving data.
 
 To update a property with a new value, call `db.put(<path>, <value>, <property>)` where `<path>` is the path to the JSON file relative to `data/`, `<value>` is the new value to save, and `<property>` is a string representation of the specific object property you want to update.
 

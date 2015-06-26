@@ -5,32 +5,23 @@ var db = require('./lib/db'),
 
 module.exports = {
 
-    '/index': function(response, request) {
-
-        db.get('index').then(function(data) {
-
-            data.className = request.query.query;
-
-            db.put('index', data.count + 1, 'count').then(function(){
-                response.resolve(data);
-            });
-        });
-    },
-
     '/admin': function(response) {
 
         var collections = [];
 
-        fs.readdir('data', function(err, files) {
+        fs.readdir(__dirname.replace('/node_modules/breadbox', '/models'), function(err, files) {
 
-            files.forEach(function(file, index) {
+            if (files) {
 
-                collections.push(file.replace('.json', ''));
+                files.forEach(function(file, index) {
 
-                if (index === files.length - 1) {
-                    response.resolve({ collections: collections, className: 'admin' });
-                }
-            });
+                    collections.push(file.replace('.json', ''));
+
+                    if (index === files.length - 1) {
+                        response.resolve({ collections: collections, className: 'admin' });
+                    }
+                });
+            }
         });
     },
 
@@ -43,7 +34,7 @@ module.exports = {
 
         if (request.body) {
 
-            //try {
+            try {
 
                 context.json = JSON.parse(request.body.json);
 
@@ -53,23 +44,23 @@ module.exports = {
 
                     context.saved = true;
 
-                    response.resolve(context, 'collection.html');
+                    response.resolve(context, '../node_modules/breadbox/views/collection.html');
                 });
 
-            // } catch(err) {
+            } catch(err) {
 
-            //     console.error(err);
+                console.error(err);
 
-            //     db.get(request.params.collection).then(function(data) {
+                db.get(request.params.collection).then(function(data) {
 
-            //         context.json = JSON.stringify(data, null, 4);
+                    context.json = JSON.stringify(data, null, 4);
 
-            //         context.error = 'Save failed, probably due to malformed JSON.';
+                    context.error = 'Save failed, probably due to malformed JSON.';
 
-            //         response.resolve(context, 'collection.html');
-            //     });
+                    response.resolve(context, '../node_modules/breadbox/views/collection.html');
+                });
 
-            // }
+            }
 
         } else {
 
@@ -77,7 +68,7 @@ module.exports = {
 
                 context.json = JSON.stringify(data, null, 4);
 
-                response.resolve(context, 'collection.html');
+                response.resolve(context, '../node_modules/breadbox/views/collection.html');
             });
         }
     }

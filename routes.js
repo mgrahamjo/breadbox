@@ -71,6 +71,10 @@ module.exports = {
                 response.resolve(context, '../node_modules/breadbox/views/collection.html');
             });
         }
+    },
+
+    '/login': function(response, request) {
+        response.resolve({ from: request.query.from });
     }
 
 };

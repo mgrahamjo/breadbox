@@ -104,6 +104,10 @@ module.exports = {
                             'Content-Type': 'text/html; charset=UTF-8',
                             'Location': request.body.from || '/'
                         });
+                    
+                    } else {
+
+                        response.resolve({ failed: true, from: request.query.from });
                     }
                 });
 
@@ -119,6 +123,11 @@ module.exports = {
 
             response.resolve({ from: request.query.from });
         }
+    }, 
+
+    '/logout' : function(response) {
+
+        response.resolve();
     }
 
 };

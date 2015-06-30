@@ -8,6 +8,10 @@
 
 <form action="/login?from={{from}}" method="post" class="login-form">
 
+	{{ if failed }}
+	<p class="fail">Wrong.</p>
+	{{ endif }}
+
 	<label>Username</label>
 	<input name="username" type="text"><br>
 

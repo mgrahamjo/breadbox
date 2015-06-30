@@ -49,12 +49,6 @@ a {
   position: absolute;
   top: 20px;
   right: 20px;
-	background: rgb(38, 39, 42);
-  border: none;
-  padding: 10px 25px;
-  color: white;
-  font-weight: bold;
-  font-size: 12pt;
 }
 
 h1 {
@@ -71,6 +65,16 @@ input[type="submit"] {
   color: white;
   font-weight: bold;
   font-size: 12pt;
+}
+
+.btn {
+  background: rgb(38, 39, 42);
+  border: none;
+  padding: 10px 25px;
+  color: white;
+  font-weight: bold;
+  font-size: 12pt;
+  margin-top: 20px;
 }
 
 .btn:hover {
@@ -128,7 +132,7 @@ input[type="submit"] {
 }
 
 .name {
-  margin: 20px 92px 0 0;
+  margin: 20px 20px 0 0;
   padding: 11px 10px;
   background-color: rgb(203, 203, 203);
   border: 1px solid black;

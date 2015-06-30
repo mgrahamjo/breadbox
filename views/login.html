@@ -6,13 +6,17 @@
 
 </div>
 
-<form action="/login?from={{from}}" method="post">
+<form action="/login?from={{from}}" method="post" class="login-form">
 
 	<label>Username</label>
-	<input name="username" type="text">
+	<input name="username" type="text"><br>
 
 	<label>Password</label>
 	<input name="password" type="password">
+
+	<input type="hidden" name="from" value="{{from}}">
+
+	<input type="submit" value="log in">
 
 </form>
 

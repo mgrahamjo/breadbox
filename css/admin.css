@@ -61,7 +61,7 @@ h1 {
   float: left;
 }
 
-input {
+input[type="submit"] {
   position: fixed;
   top: calc(100% - 50px);
   left: 13px;
@@ -112,4 +112,9 @@ input {
 
 .msg.error {
   background-color: rgb(218, 73, 73);
+}
+
+.login-form {
+  padding: 2em;
+  text-align: center;
 }

@@ -4,6 +4,10 @@
 
 	<h1>Data</h1>
 
+	<input type="text" class="input" placeholder="name">
+
+	<a class="btn new">+ Add</a>
+
 </div>
 
 {{for collection in collections}}
@@ -11,6 +15,16 @@
 	<a class="btn collection" href="/admin/{{collection}}">{{collection}}</a>
 
 {{endfor}}
+
+<script>
+
+var $ = document.querySelector;
+
+	$('.new').addEventListener('click', function() {
+        location.href = '/admin/new/' + $('.input').value.replace(/\.json$/i, '');
+    });
+
+</script>
 
 </body>
 

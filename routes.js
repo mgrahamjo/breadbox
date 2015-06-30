@@ -75,31 +75,35 @@ module.exports = {
 
     '/admin/new/{{collection}}': function(response, request) {
 
+        var context = {
+            collection: request.params.collection,
+            className: 'admin'
+        };
+
         db.put(request.params.collection, {}).then(function() {
 
             response.resolve(context, '../node_modules/breadbox/views/collection.html');
         });
     },
 
-    '/login': function(context, req, res) {
+    '/login': function(response, request) {
 
-        if (req.body) {
+        if (request.body) {
 
             try {
 
-                var user = req.body.username,
-                    pass = req.body.password;
+                var user = request.body.username,
+                    pass = request.body.password;
 
                 db.get('users').then(function(users) {
 
                     if (users[user] === pass) {
-                        console.log('authenticated -> ' + req.body.from);
-                        // Need to create session here
-                        res.writeHead(302, {
-                            'Location': req.body.from || '/'
-                        });
                         
-                        res.end();
+                        request.redirect(302, {
+                            'Set-Cookie': 'user=' + user,
+                            'Content-Type': 'text/html; charset=UTF-8',
+                            'Location': request.body.from || '/'
+                        });
                     }
                 });
 
@@ -107,13 +111,13 @@ module.exports = {
 
                 console.error(err);
 
-                context.resolve({ failed: true });
+                response.resolve({ failed: true });
 
             }
 
         } else {
 
-            context.resolve({ from: req.query.from });
+            response.resolve({ from: request.query.from });
         }
     }
 

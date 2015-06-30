@@ -2,11 +2,11 @@
 
 <div class="header">
 
-	<h1>Data</h1>
+	<h1 class="left">Data</h1>
 
-	<input type="text" class="input" placeholder="name">
+	<a class="btn new right back saved">+ Add</a>
 
-	<a class="btn new">+ Add</a>
+	<input type="text" class="input right name" placeholder="name">
 
 </div>
 
@@ -18,10 +18,8 @@
 
 <script>
 
-var $ = document.querySelector;
-
-	$('.new').addEventListener('click', function() {
-        location.href = '/admin/new/' + $('.input').value.replace(/\.json$/i, '');
+	document.querySelector('.new').addEventListener('click', function() {
+        location.href = '/admin/new/' + document.querySelector('.input').value.replace(/\.json$/i, '');
     });
 
 </script>

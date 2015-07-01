@@ -29,6 +29,10 @@ textarea.error {
   color: rgb(218, 73, 73);
 }
 
+.clear {
+  overflow: auto;
+}
+
 .header {
   background-color: rgb(37, 37, 37);
   clear: both;
@@ -40,15 +44,13 @@ textarea.error {
   -webkit-box-shadow: 1px 1px 0px rgb(26, 28, 29);
 }
 
+.header .btn {
+  margin-top: 20px;
+}
+
 a {
 	text-decoration: none;
 	color: rgb(0, 158, 255);
-}
-
-.back {
-  position: absolute;
-  top: 20px;
-  right: 20px;
 }
 
 h1 {
@@ -74,7 +76,6 @@ input[type="submit"] {
   color: white;
   font-weight: bold;
   font-size: 12pt;
-  margin-top: 20px;
 }
 
 .btn:hover {
@@ -85,15 +86,28 @@ input[type="submit"] {
 }
 
 .collection {
-  background-color: rgb(37, 37, 37);
   display: block;
-  margin: 10px;
-  padding: 15px 20px;
+  margin: 20px;
   font-size: 14pt;
   color: white;
   box-shadow: 1px 1px 0px rgb(26, 28, 29);
   -moz-box-shadow: 1px 1px 0px rgb(26, 28, 29);
   -webkit-box-shadow: 1px 1px 0px rgb(26, 28, 29);
+}
+
+.collection .btn {
+  margin: 0;
+  background-color: rgb(37, 37, 37);
+  width: calc(100% - 100px);
+  display: block;
+  box-sizing: border-box;
+  float: left;
+}
+
+.collection .btn.delete {
+  background-color: rgb(195, 63, 63);
+  margin: 0;
+  width: 100px;
 }
 
 .msg {

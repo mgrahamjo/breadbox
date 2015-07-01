@@ -86,6 +86,22 @@ module.exports = {
         });
     },
 
+    '/admin/delete/{{collection}}': function(response, request) {
+
+        var context = {
+            collection: request.params.collection,
+            className: 'admin'
+        };
+
+        db.drop(request.params.collection).then(function() {
+
+            request.redirect(302, {
+                'Content-Type': 'text/html; charset=UTF-8',
+                'Location': '/admin'
+            });
+        });
+    },
+
     '/login': function(response, request) {
 
         if (request.body) {

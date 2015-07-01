@@ -13,15 +13,31 @@
 </div>
 
 {{for collection in collections}}
-
-	<a class="btn collection" href="/admin/{{collection}}">{{collection}}</a>
+	
+	<div class="collection clear">
+		<a class="btn" href="/admin/{{collection}}">{{collection}}</a>
+		<span class="btn delete right" data-collection="{{collection}}">Delete</span>
+	</div>
 
 {{endfor}}
 
 <script>
 
-	document.querySelector('.new').addEventListener('click', function() {
-        location.href = '/admin/new/' + document.querySelector('.input').value.replace(/\.json$/i, '');
+	var $ = function(selector) {
+		return [].slice.call(document.querySelectorAll(selector));
+	};
+
+	$('.new')[0].addEventListener('click', function() {
+        location.href = '/admin/new/' + $('.input')[0].value.replace(/\.json$/i, '');
+    });
+
+    $('.delete').forEach(function(el) {
+    	el.addEventListener('click', function(e) {
+    		e.stopPropagation();
+    		if (confirm('Are you sure you want to permanently delete ' + el.getAttribute('data-collection') + '.json?')) {
+	    		location.href = '/admin/delete/' + el.getAttribute('data-collection');
+	    	}
+    	});
     });
 
 </script>

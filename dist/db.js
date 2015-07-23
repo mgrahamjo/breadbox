@@ -39,13 +39,30 @@ module.exports = {
 
         var response = promise();
 
-        fs.readFile(modelPath + path + '.json', { encoding: 'utf8' }, function (err, data) {
+        path = modelPath + path + '.json';
 
-            if (err) {
-                throw err;
+        fs.exists(path, function (exists) {
+
+            if (exists) {
+
+                fs.readFile(path, { encoding: 'utf8' }, function (err, data) {
+
+                    if (err) {
+                        throw err;
+                    }
+
+                    try {
+
+                        response.resolve(JSON.parse(data));
+                    } catch (err) {
+
+                        response.resolve(err);
+                    }
+                });
+            } else {
+
+                response.resolve(null);
             }
-
-            response.resolve(JSON.parse(data));
         });
 
         return response;

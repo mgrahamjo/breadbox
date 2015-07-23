@@ -4,8 +4,6 @@ var read = require('fs').readFile,
     run = require('vm').runInNewContext,
     promise = require('./promise'),
     htmlEscape = require('./htmlEscape'),
-    path = require('path'),
-    parentDir = '/' + path.join(__dirname, '../..').split('/').pop(),
     includeRegx = /{{\s*?include\s(\S*?)s*?}}/i,
     varRegx = /{{([\s\S]*?)}}/,
     forIn = /{{\s*?for\s*?\S*?\s*?in\s*?\S*?\s*?}}/i,
@@ -213,7 +211,7 @@ function render(url, filepath, request, controller) {
     getContext(request, controller).then(function (context, customPath, headers) {
 
         if (customPath) {
-            filepath = __dirname.replace(parentDir + '/breadbox/dist', '/views/') + customPath;
+            filepath = customPath;
         }
 
         // get template. read = fs.readFile

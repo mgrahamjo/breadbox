@@ -63,7 +63,7 @@ module.exports = function (settings) {
     function parseVars(route, keys) {
       // Replace the variable in the route with a capturing group, cast it as
       // a regex, and test that against the URL
-      var pathMatches = new RegExp(route.split('|')[0].replace(varRegx, '([^/]+)')).exec(relPath);
+      var pathMatches = new RegExp('^' + route.split('|')[0].replace(varRegx, '([^/]+)') + '$').exec(relPath);
       // If the URL matches the route regex...
       if (pathMatches) {
         // Save the route so we can reference it when we get our context
@@ -172,7 +172,7 @@ module.exports = function (settings) {
       });
     }
 
-    if (authenticate && pathname !== '/login' && !session.user) {
+    if (authenticate && pathname !== loginPage && !session.user) {
       login();
     }
 

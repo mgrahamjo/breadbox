@@ -1,7 +1,10 @@
 'use strict';
 
 var db = require('./dist/db'),
-    fs = require('fs');
+    fs = require('fs'),
+    bcrypt = require('bcrypt-nodejs'),
+    path = require('path'),
+    parentDir = path.join(__dirname, '../..');
 
 module.exports = {
 
@@ -9,7 +12,7 @@ module.exports = {
 
         var collections = [];
 
-        fs.readdir(__dirname.replace('/node_modules/breadbox', '/models'), function(err, files) {
+        fs.readdir(parentDir + '/models', function(err, files) {
 
             if (files) {
 
@@ -44,7 +47,7 @@ module.exports = {
 
                     context.saved = true;
 
-                    response.resolve(context, '../node_modules/breadbox/views/collection.html');
+                    response.resolve(context, __dirname + '/views/collection.html');
                 });
 
             } catch(err) {
@@ -57,7 +60,7 @@ module.exports = {
 
                     context.error = 'Save failed, probably due to malformed JSON.';
 
-                    response.resolve(context, '../node_modules/breadbox/views/collection.html');
+                    response.resolve(context, __dirname + '/views/collection.html');
                 });
 
             }
@@ -68,7 +71,7 @@ module.exports = {
 
                 context.json = JSON.stringify(data, null, 4);
 
-                response.resolve(context, '../node_modules/breadbox/views/collection.html');
+                response.resolve(context, __dirname + '/views/collection.html');
             });
         }
     },
@@ -80,9 +83,22 @@ module.exports = {
             className: 'admin'
         };
 
-        db.put(request.params.collection, {}).then(function() {
+        fs.exists(parentDir + '/models/' + request.params.collection + '.json', function(exists) {
 
-            response.resolve(context, '../node_modules/breadbox/views/collection.html');
+            if (exists) {
+
+                request.redirect(302, {
+                    'Content-Type': 'text/html; charset=UTF-8',
+                    'Location': '/admin/' + request.params.collection
+                });
+
+            } else {
+
+                db.put(request.params.collection, data || {}).then(function() {
+
+                    response.resolve(context, __dirname + '/views/collection.html');
+                });
+            }
         });
     },
 
@@ -113,18 +129,21 @@ module.exports = {
 
                 db.get('users').then(function(users) {
 
-                    if (users[user] === pass) {
-                        
-                        request.redirect(302, {
-                            'Set-Cookie': 'user=' + user,
-                            'Content-Type': 'text/html; charset=UTF-8',
-                            'Location': request.body.from || '/'
-                        });
-                    
-                    } else {
+                    bcrypt.compare(pass, users[user], function(err, success) {
 
-                        response.resolve({ failed: true, from: request.query.from });
-                    }
+                        //if (success) {
+                        
+                            request.redirect(302, {
+                                'Set-Cookie': 'user=' + user,
+                                'Content-Type': 'text/html; charset=UTF-8',
+                                'Location': request.body.from || '/'
+                            });
+                        
+                        //} else {
+
+                            //response.resolve({ failed: true, from: request.query.from });
+                        //}
+                    });
                 });
 
             } catch(err) {

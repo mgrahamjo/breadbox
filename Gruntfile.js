@@ -17,16 +17,30 @@ module.exports = function(grunt) {
       }
     },
 
+    'babel': {
+      dist: {
+        files: {
+          'dist/app.js': 'lib/app.js',
+          'dist/db.js': 'lib/db.js',
+          'dist/htmlEscape.js': 'lib/htmlEscape.js',
+          'dist/promise.js': 'lib/promise.js',
+          'dist/render.js': 'lib/render.js'
+        }
+      }
+    },
+
     watch: {
       files: jsFiles,
-      tasks: ['jshint:all']
+      tasks: ['babel', 'jshint:all']
     },
 
   });
 
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-babel');
 
-  grunt.registerTask('default', ['jshint:all']);
+  grunt.registerTask('default', ['babel', 'jshint:all']);
+
 
 };

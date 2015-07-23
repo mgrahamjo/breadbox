@@ -1,6 +1,6 @@
 'use strict';
 
-var db = require('./lib/db'),
+var db = require('./dist/db'),
     fs = require('fs');
 
 module.exports = {

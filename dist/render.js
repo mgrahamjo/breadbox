@@ -15,7 +15,7 @@ var read = require('fs').readFile,
 
 function regexIndex(str, regex, startpos) {
     var indexOf = str.substring(startpos || 0).search(regex);
-    return (indexOf >= 0) ? (indexOf + (startpos || 0)) : indexOf;
+    return indexOf >= 0 ? indexOf + (startpos || 0) : indexOf;
 }
 
 function parseVars(template, context, match) {
@@ -25,7 +25,7 @@ function parseVars(template, context, match) {
         filters = match[1].split('|'),
         ref = filters.shift(0);
 
-    filters.forEach(function(filter, i) {
+    filters.forEach(function (filter, i) {
         filters[i] = filter.replace(/\s/g, '');
     });
 
@@ -34,8 +34,7 @@ function parseVars(template, context, match) {
         if (typeof value === 'string' && filters.indexOf('safe') === -1) {
             value = htmlEscape(value);
         }
-    }
-    catch(err) {
+    } catch (err) {
         value = '';
     }
 
@@ -44,22 +43,19 @@ function parseVars(template, context, match) {
 
 function parseLoops(template, context, match) {
 
-    var raw     = match[0],
-        key     = match[1],
+    var raw = match[0],
+        key = match[1],
         arrName = match[2],
-        html    = match[3],
-        array   = [],
-        output  = '',
+        html = match[3],
+        array = [],
+        output = '',
         initKeyValue = context[key];
 
     try {
         array = run(arrName, context);
-    }
-    catch(err) {
-        
-    }
+    } catch (err) {}
 
-    array.forEach(function(value) {
+    array.forEach(function (value) {
         context[key] = value;
         output += parse(html, context);
     });
@@ -71,39 +67,38 @@ function parseLoops(template, context, match) {
 
 function parseIfs(template, context, match) {
 
-    var raw     = match[0],
-        value   = match[1],
-        html    = match[2],
+    var raw = match[0],
+        value = match[1],
+        html = match[2],
         doShow;
 
     try {
         doShow = run(value, context);
-    }
-    catch(err) {
-        
-    }
-    
+    } catch (err) {}
+
     return parse(doShow ? template.replace(raw, html) : template.replace(raw, ''), context);
 }
 
 // Recursively asyncronously parses partial includes
 // then calls the callback with the result
 function parseIncludes(template, callback) {
-    
+
     var match = includeRegx.exec(template),
-        raw, path;
+        raw,
+        path;
 
     if (match !== null) {
 
-        raw  = match[0];
+        raw = match[0];
         path = match[1];
 
-        read(__dirname + '/../views/' + path + '.html', { encoding: 'utf8' }, function(err, html) {
+        read(__dirname + '/../views/' + path + '.html', { encoding: 'utf8' }, function (err, html) {
 
-            if (err) { throw err; }
+            if (err) {
+                throw err;
+            }
 
             parseIncludes(template.replace(raw, html), callback);
-
         });
     } else {
         callback(template);
@@ -113,54 +108,50 @@ function parseIncludes(template, callback) {
 // In order to support nesting, we need to build
 // a regex that ignores the correct number of closing tags.
 function getLoopRegx(template) {
-    
-    var result,
 
+    var result,
         secondHalf = template.split(forIn)[1];
 
     if (!secondHalf) {
 
         result = false;
-    // If another for-in loop starts before this one is closed...
+        // If another for-in loop starts before this one is closed...
     } else if (regexIndex(secondHalf, forIn) < regexIndex(secondHalf, endfor)) {
         // use lazy matching
         result = /{{\s*?for\s*?(\S*?)\s*?in\s*?(\S*?)\s*?}}([\s\S]*?){{\s*?endfor\s*?}}/i;
-
     } else {
         // use greedy matching
         result = /{{\s*?for\s*?(\S*?)\s*?in\s*?(\S*?)\s*?}}([\s\S]*){{\s*?endfor\s*?}}/i;
     }
-    
+
     return result;
 }
 
 function getIfRegx(template) {
-    
-    var result,
 
+    var result,
         secondHalf = template.split(ifBlock)[1];
 
     if (!secondHalf) {
 
         result = false;
-    // If another if block starts before this one is closed...
+        // If another if block starts before this one is closed...
     } else if (regexIndex(secondHalf, ifBlock) < regexIndex(secondHalf, endif)) {
         // use greedy matching
         result = /{{\s*?if\s*?([\s\S]*?)\s*?}}([\s\S]*){{\s*?endif\s*?}}/i;
-
     } else {
         // use lazy matching
         result = /{{\s*?if\s*?([\s\S]*?)\s*?}}([\s\S]*?){{\s*?endif\s*?}}/i;
     }
-    
+
     return result;
 }
 
 // Parsing functions that run syncronously are executed here.
 function parse(template, context) {
 
-    var match, regx,
-
+    var match,
+        regx,
         loopFirst = regexIndex(template, forIn) < regexIndex(template, ifBlock);
 
     if (loopFirst) {
@@ -178,7 +169,6 @@ function parse(template, context) {
 
             template = parseIfs(template, context, regx.exec(template));
         }
-        
     } else {
 
         regx = getIfRegx(template);
@@ -220,21 +210,23 @@ function render(url, filepath, request, controller) {
 
     var response = promise();
 
-    getContext(request, controller).then(function(context, customPath, headers) {
-        
+    getContext(request, controller).then(function (context, customPath, headers) {
+
         if (customPath) {
             filepath = __dirname.replace(parentDir + '/breadbox/dist', '/views/') + customPath;
         }
 
         // get template. read = fs.readFile
-        read(filepath, { encoding: 'utf8' }, function(err, template) {
+        read(filepath, { encoding: 'utf8' }, function (err, template) {
 
-            if (err) { throw err; }
+            if (err) {
+                throw err;
+            }
 
             // Now that we have everything we need, we can interpolate
             // the template and put together the response.
             // First, lets get any included partials so we have the full template.
-            parseIncludes(template, function(fullTemplate) {
+            parseIncludes(template, function (fullTemplate) {
                 response.resolve(parse(fullTemplate, context), headers);
             });
         });

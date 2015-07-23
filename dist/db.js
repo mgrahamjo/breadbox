@@ -24,10 +24,9 @@ function save(path, data, response) {
 
     escape(data);
 
-    fs.writeFile(modelPath + path + '.json', JSON.stringify(data), function(err) {
+    fs.writeFile(modelPath + path + '.json', JSON.stringify(data), function (err) {
         if (err) {
             throw err;
-
         } else {
             response.resolve('success');
         }
@@ -36,14 +35,16 @@ function save(path, data, response) {
 
 module.exports = {
 
-    get: function(path) {
+    get: function get(path) {
 
         var response = promise();
 
-        fs.readFile(modelPath + path + '.json', { encoding: 'utf8' }, function(err, data) {
-            
-            if (err) { throw err; }
-            
+        fs.readFile(modelPath + path + '.json', { encoding: 'utf8' }, function (err, data) {
+
+            if (err) {
+                throw err;
+            }
+
             response.resolve(JSON.parse(data));
         });
 
@@ -52,31 +53,29 @@ module.exports = {
 
     // If a key is provided, the put method first gets the freshest data
     // before updating that key. Otherwise it updates the whole collection.
-    put: function(path, value, key) {
+    put: function put(path, value, key) {
 
         var response = promise();
 
         if (key) {
 
-            fs.exists(modelPath + path + '.json', function(exists) {
+            fs.exists(modelPath + path + '.json', function (exists) {
 
                 if (exists) {
 
-                    this.get(path).then(function(data) {
+                    this.get(path).then(function (data) {
 
                         vm.createContext(data);
-                        
+
                         vm.runInNewContext(key + '=' + value, data);
 
                         save(path, data, response);
                     });
-
                 } else {
 
                     save(path, value, response);
                 }
             });
-
         } else {
 
             save(path, value, response);
@@ -85,11 +84,11 @@ module.exports = {
         return response;
     },
 
-    drop: function(path) {
+    drop: function drop(path) {
 
         var response = promise();
 
-        fs.unlink(modelPath + path + '.json', function(err) {
+        fs.unlink(modelPath + path + '.json', function (err) {
 
             response.resolve(err);
         });

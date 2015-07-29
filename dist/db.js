@@ -72,7 +72,8 @@ module.exports = {
     // before updating that key. Otherwise it updates the whole collection.
     put: function put(path, value, key) {
 
-        var response = promise();
+        var db = this,
+            response = promise();
 
         if (key) {
 
@@ -80,11 +81,11 @@ module.exports = {
 
                 if (exists) {
 
-                    this.get(path).then(function (data) {
+                    db.get(path).then(function (data) {
 
                         vm.createContext(data);
 
-                        vm.runInNewContext(key + '=' + value, data);
+                        vm.runInNewContext(key + '=' + JSON.stringify(value), data);
 
                         save(path, data, response);
                     });
@@ -101,14 +102,36 @@ module.exports = {
         return response;
     },
 
-    drop: function drop(path) {
+    // deletes the collection, or, if key is provided,
+    // deletes that property from the collection
+    drop: function drop(path, key) {
 
-        var response = promise();
+        var db = this,
+            response = promise();
 
-        fs.unlink(modelPath + path + '.json', function (err) {
+        if (key) {
 
-            response.resolve(err);
-        });
+            fs.exists(modelPath + path + '.json', function (exists) {
+
+                if (exists) {
+
+                    db.get(path).then(function (data) {
+
+                        vm.createContext(data);
+
+                        vm.runInNewContext('delete ' + key, data);
+
+                        save(path, data, response);
+                    });
+                }
+            });
+        } else {
+
+            fs.unlink(modelPath + path + '.json', function (err) {
+
+                response.resolve(err);
+            });
+        }
 
         return response;
     }

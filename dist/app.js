@@ -5,6 +5,8 @@ var http = require('http'),
     fs = require('fs'),
     path = require('path'),
     render = require('./render'),
+    promise = require('./promise'),
+    session = require('./session'),
     appRoutes = require('../routes'),
     formidable = require('formidable');
 
@@ -41,7 +43,7 @@ module.exports = function (settings) {
         loginPage = settings.loginPage || '/login',
         logoutPage = settings.logoutPage || '/logout',
         authenticate = false,
-        session = {},
+        sessionData = promise(),
         mime = {
       '.css': 'text/css; charset=UTF-8',
       '.js': 'text/javascript; charset=UTF-8',
@@ -52,7 +54,7 @@ module.exports = function (settings) {
       '.gif': 'image/gif',
       '.jpg': 'image/jpeg'
     },
-        cookies,
+        cookies = {},
         controller,
         request;
 
@@ -157,24 +159,38 @@ module.exports = function (settings) {
           }
         }
       }
-    }
 
-    if (req.headers.cookie) {
-      if (req.headers.cookie.indexOf(';') > -1) {
-        cookies = req.headers.cookie.split[';'];
-      } else {
-        cookies = [req.headers.cookie];
+      if (req.headers.cookie) {
+        (function () {
+
+          var cookieList = undefined,
+              cookieParts = undefined;
+
+          if (req.headers.cookie.indexOf(';') > -1) {
+            cookieList = req.headers.cookie.split(';');
+          } else {
+            cookieList = [req.headers.cookie];
+          }
+
+          cookieList.forEach(function (cookie) {
+            cookieParts = cookie.split('=');
+            cookies[cookieParts[0].trim()] = cookieParts[1].trim();
+          });
+
+          if (cookies.user) {
+            session.get(cookies.user).then(function (data) {
+              sessionData.resolve(data);
+            });
+          }
+        })();
       }
 
-      cookies.forEach(function (cookie) {
-        var cookieParts = cookie.split('=');
-        session[cookieParts[0]] = cookieParts[1];
-      });
+      if (authenticate && pathname !== loginPage && !cookies.user) {
+        login();
+      }
     }
 
-    if (authenticate && pathname !== loginPage && !session.user) {
-      login();
-    }
+    filepath = filepath.replace('//', '/');
 
     console.log('Request: ' + filepath);
 
@@ -212,6 +228,8 @@ module.exports = function (settings) {
         data: req,
         params: params,
         query: parsedUrl.query,
+        getSession: sessionData,
+        cookies: cookies,
         redirect: redirect
       };
 

@@ -29,6 +29,10 @@ textarea.error {
   color: rgb(218, 73, 73);
 }
 
+.center {
+  text-align: center;
+}
+
 .clear {
   overflow: auto;
 }
@@ -45,7 +49,7 @@ textarea.error {
 }
 
 .header .btn {
-  margin-top: 20px;
+  margin: 20px 20px 0 0;
 }
 
 a {

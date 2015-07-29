@@ -24,7 +24,8 @@ module.exports = function(grunt) {
           'dist/db.js': 'lib/db.js',
           'dist/htmlEscape.js': 'lib/htmlEscape.js',
           'dist/promise.js': 'lib/promise.js',
-          'dist/render.js': 'lib/render.js'
+          'dist/render.js': 'lib/render.js',
+          'dist/session.js': 'lib/session.js'
         }
       }
     },

@@ -7,10 +7,35 @@ var http = require('http'),
     render = require('./render'),
     promise = require('./promise'),
     session = require('./session'),
-    appRoutes = require('../routes'),
+    appRoutes = require('./routes'),
     formidable = require('formidable');
 
 module.exports = function (settings) {
+
+  var variableUrls = [],
+      staticUrls = [],
+
+  // varRegx matches route names that contain variables
+  varRegx = /{{([\s\S]*?)}}/g;
+
+  function fixDoubleSlashes(route) {
+    return route.replace(/\/\//g, '/').replace(/\/$/, '');
+  }
+
+  // figure out which routes have URL params
+  function sortRoutes(routeNames) {
+
+    Object.keys(routeNames).forEach(function (route) {
+      if (route.match(varRegx)) {
+        variableUrls.push(route);
+      } else {
+        staticUrls.push(route);
+      }
+    });
+  }
+
+  sortRoutes(settings.controllers);
+  sortRoutes(appRoutes);
 
   http.createServer(function (req, res) {
 
@@ -34,9 +59,6 @@ module.exports = function (settings) {
     // extension is the filetype, falls back to html
     extension = path.extname(pathname),
 
-    // varRegx matches route names that contain variables
-    varRegx = /{{([\s\S]*?)}}/g,
-
     // params is for URL parameters
     params = {},
         controllers = settings.controllers,
@@ -54,9 +76,19 @@ module.exports = function (settings) {
       '.gif': 'image/gif',
       '.jpg': 'image/jpeg'
     },
+        isView = extension === '' || extension === '.html',
         cookies = {},
         controller,
         request;
+
+    function fourZeroFour(type, data) {
+
+      console.log(type + ' not found: ' + data);
+
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+
+      res.end(type + ' not found: ' + data);
+    }
 
     // parseVars takes a requested route and an array of pre-interpolated
     // variables in that route and populates the params object.
@@ -85,32 +117,19 @@ module.exports = function (settings) {
       return false;
     }
 
-    // To avoid parsing routes that don't contain variables,
-    // this function performs a quick regex.
-    function lookForVars(route) {
-      // If this route has a variable in it...
-      var routeMatches = route.match(varRegx);
-      // ... parse it.
-      return routeMatches ? parseVars(route, routeMatches) : false;
-    }
+    if (isView && staticUrls.indexOf(relPath) === -1) {
 
-    // See if any dynamic routes match this URL.
-    function checkRoutes(routeNames) {
+      for (var i = 0; i < variableUrls.length; i++) {
 
-      Object.keys(routeNames).forEach(function (route) {
-        if (lookForVars(route)) {
-          return true;
+        var keys = variableUrls[i].match(varRegx);
+
+        if (keys && parseVars(variableUrls[i], keys)) {
+          break;
         }
-      });
-
-      return false;
+      }
     }
 
-    if (!checkRoutes(controllers)) {
-      checkRoutes(appRoutes);
-    }
-
-    relPath = relPath.replace(/\/\//g, '/').replace(/\/$/, '');
+    relPath = fixDoubleSlashes(relPath);
 
     // Treat all extensionless requests as html.
     // Re-route html requests to views folder.
@@ -130,21 +149,12 @@ module.exports = function (settings) {
       res.end();
     }
 
-    function fourZeroFour(type, data) {
-
-      console.log(type + ' not found: ' + data);
-
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
-
-      res.end(type + ' not found: ' + data);
-    }
-
     function redirect(status, headers) {
       res.writeHead(status, headers);
       res.end();
     }
 
-    if (extension === '.html') {
+    if (isView) {
 
       controller = controllers[routeName];
 
@@ -190,7 +200,7 @@ module.exports = function (settings) {
       }
     }
 
-    filepath = filepath.replace('//', '/');
+    filepath = fixDoubleSlashes(filepath);
 
     console.log('Request: ' + filepath);
 
@@ -222,7 +232,7 @@ module.exports = function (settings) {
     }
 
     // If there's a template to get, we have some work to do.
-    if (extension === '.html' && controller) {
+    if (isView && controller) {
 
       request = {
         data: req,

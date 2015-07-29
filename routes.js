@@ -1,11 +1,12 @@
 'use strict';
 
-var db = require('./dist/db'),
+var db = require('./db'),
     fs = require('fs'),
     bcrypt = require('bcrypt-nodejs'),
     path = require('path'),
-    session = require('./dist/session'),
-    parentDir = path.join(__dirname, '../..');
+    session = require('./session'),
+    thisDir = path.join(__dirname, '..'),
+    parentDir = path.join(__dirname, '../../..');
 
 module.exports = {
 
@@ -13,22 +14,26 @@ module.exports = {
 
         var collections = [];
 
-        fs.readdir(parentDir + '/models', function(err, files) {
+        request.getSession.then(function(session) {
 
-            if (files) {
+            fs.readdir(parentDir + '/models', function(err, files) {
 
-                files.forEach(function(file, index) {
+                if (files) {
 
-                    collections.push(file.replace('.json', ''));
+                    files.forEach(function(file, index) {
 
-                    if (index === files.length - 1) {
-                        response.resolve({
-                            collections: collections,
-                            className: 'admin'
-                        });
-                    }
-                });
-            }
+                        collections.push(file.replace('.json', ''));
+
+                        if (index === files.length - 1) {
+                            response.resolve({
+                                collections: collections,
+                                className: 'admin',
+                                userRole: session.role
+                            });
+                        }
+                    });
+                }
+            });
         });
     },
 
@@ -51,7 +56,7 @@ module.exports = {
 
                     context.saved = true;
 
-                    response.resolve(context, __dirname + '/views/collection.html');
+                    response.resolve(context, thisDir + '/views/collection.html');
                 });
 
             } catch(err) {
@@ -64,7 +69,7 @@ module.exports = {
 
                     context.error = 'Save failed, probably due to malformed JSON.';
 
-                    response.resolve(context, __dirname + '/views/collection.html');
+                    response.resolve(context, thisDir + '/views/collection.html');
                 });
             }
 
@@ -74,7 +79,7 @@ module.exports = {
 
                 context.json = JSON.stringify(data, null, 4);
 
-                response.resolve(context, __dirname + '/views/collection.html');
+                response.resolve(context, thisDir + '/views/collection.html');
             });
         }
     },
@@ -97,20 +102,57 @@ module.exports = {
 
             } else {
 
-                db.put(request.params.collection, data || {}).then(function() {
+                db.put(request.params.collection, {}).then(function() {
 
-                    response.resolve(context, __dirname + '/views/collection.html');
+                    response.resolve(context, thisDir + '/views/collection.html');
                 });
             }
         });
     },
 
-    '/admin/delete/{{collection}}': function(response, request) {
+    '/admin/new-user': function(response, request) {
 
         var context = {
-            collection: request.params.collection,
             className: 'admin'
         };
+
+        if (request.body) {
+
+            try {
+
+                bcrypt.genSalt(10, (err, salt) => {
+                    bcrypt.hash(request.body.password, salt, null, (err, passHash) => {
+                        
+                        let user = {
+                            password: passHash,
+                            role: request.body.role
+                        };
+
+                        db.put('users', user, request.body.name).then(function(success) {
+
+                            context.saved = success;
+
+                            response.resolve(context, thisDir + '/views/newuser.html');
+                        });
+                    });
+                });
+
+            } catch(err) {
+
+                console.error(err);
+
+                context.error = 'Save failed.';
+
+                response.resolve(context, thisDir + '/views/newuser.html');
+            }
+
+        } else {
+
+            response.resolve(context, thisDir + '/views/newuser.html');
+        }        
+    },
+
+    '/admin/delete/{{collection}}': function(response, request) {
 
         db.drop(request.params.collection).then(function() {
 
@@ -134,12 +176,14 @@ module.exports = {
 
                     bcrypt.compare(pass, users[user].password, function(err, success) {
 
-                        //if (success) {
+                        if (success) {
 
                             session.save(user, {
                                 name: user,
                                 role: users[user].role
                             });
+
+                            // HANDLE UNDEFINED FROM
                         
                             request.redirect(302, {
                                 'Set-Cookie': 'user=' + user,
@@ -147,10 +191,10 @@ module.exports = {
                                 'Location': request.body.from || '/'
                             });
                         
-                        //} else {
+                        } else {
 
-                            //response.resolve({ failed: true, from: request.query.from });
-                        //}
+                            response.resolve({ failed: true, from: request.query.from });
+                        }
                     });
                 });
 

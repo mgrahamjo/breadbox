@@ -6,6 +6,10 @@
 
 	<a class="btn right" href="/logout">Log out</a>
 
+	{{if userRole === 'admin'}}
+		<a class="btn right" id="new-user">+ Add User</a>
+	{{endif}}
+
 	<a class="btn right saved" id="new-file">+ Add File</a>
 
 	<input type="text" class="input right name" placeholder="new file">
@@ -29,6 +33,10 @@
 
 	$('#new-file')[0].addEventListener('click', function() {
         location.href = '/admin/new/' + $('.input')[0].value.replace(/\.json$/i, '');
+    });
+
+    $('#new-user')[0].addEventListener('click', function() {
+        location.href = '/admin/new-user';
     });
 
     $('.delete').forEach(function(el) {

@@ -73,6 +73,10 @@ input[type="submit"] {
   font-size: 12pt;
 }
 
+input[type="submit"].error {
+  background-color: rgb(218, 73, 73);
+}
+
 .btn {
   background: rgb(38, 39, 42);
   border: none;
@@ -136,9 +140,13 @@ input[type="submit"] {
   background-color: rgb(218, 73, 73);
 }
 
-.login-form {
+.form {
   padding: 2em;
   text-align: center;
+}
+
+.admin .form p {
+  color: white;
 }
 
 .right {

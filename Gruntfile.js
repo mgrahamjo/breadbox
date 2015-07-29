@@ -2,7 +2,7 @@
 
 module.exports = function(grunt) {
 
-  var jsFiles = ['data/*.js', 'lib/*.js'];
+  var jsFiles = ['data/*.js', 'lib/*.js', '*.js'];
 
   grunt.initConfig({
 
@@ -25,7 +25,8 @@ module.exports = function(grunt) {
           'dist/htmlEscape.js': 'lib/htmlEscape.js',
           'dist/promise.js': 'lib/promise.js',
           'dist/render.js': 'lib/render.js',
-          'dist/session.js': 'lib/session.js'
+          'dist/session.js': 'lib/session.js',
+          'dist/routes.js': 'routes.js'
         }
       }
     },

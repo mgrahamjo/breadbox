@@ -1,0 +1,71 @@
+{{include partials/head}}
+
+<div class="header">
+    
+    <h1>Breadbox - {{collection}}</h1>
+
+    {{if saved}}
+        <div class="msg saved">Saved!</div>
+    {{endif}}
+
+    {{if error}}
+        <div class="msg error">{{error}}</div>
+    {{endif}}
+
+    <a class="btn right" href="/admin">Back</a>
+
+</div>
+
+<form action="/admin/new-user" method="post" onsubmit="return validate()" class="form">
+
+    <p>Username</p>
+	<input type="text" name="name"><br>
+
+    <p>Role</p>
+    <input type="text" name="role"><br>
+
+    <p>Password</p>
+    <input type="password" name="password"><br>
+
+    <p>Confirm Password</p>
+    <input type="password"><br>
+
+	<input class="btn" type="submit" value="save" />
+
+</form>
+
+<script>
+
+    var $ = function(selector) {
+        return [].slice.call(document.querySelectorAll(selector));
+    };
+
+    function validate() {
+
+        var valid = true;
+
+        $('input').forEach(function(input) {
+            if (!input.value) {
+                valid = false;
+                return false;
+            }
+        });
+
+        if ($('[type="password"]')[0].value !== $('[type="password"]')[1].value) {
+            valid = false;
+        }
+
+        if (!valid) {
+            $('[type="submit"]')[0].classList.add('error');
+        } else {
+            $('[type="submit"]')[0].classList.remove('error');
+        }
+
+        return valid;
+    }
+
+</script>
+
+</body>
+
+</html>

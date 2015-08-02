@@ -37,6 +37,8 @@ module.exports = {
 
     get: function get(path) {
 
+        console.log('DB: get ' + path);
+
         var response = promise();
 
         path = modelPath + path + '.json';
@@ -75,6 +77,8 @@ module.exports = {
         var db = this,
             response = promise();
 
+        console.log('DB: put ' + value + ' in ' + path + ' at key ' + key);
+
         if (key) {
 
             fs.exists(modelPath + path + '.json', function (exists) {
@@ -108,6 +112,8 @@ module.exports = {
 
         var db = this,
             response = promise();
+
+        console.log('DB: drop ' + path + '; key ' + key);
 
         if (key) {
 

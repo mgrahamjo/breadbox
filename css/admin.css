@@ -4,7 +4,7 @@ body {
 }
 
 .admin {
-  background-color: rgb(40, 41, 45);
+  background-color: rgb(61, 62, 68);
 }
 
 textarea {
@@ -78,7 +78,7 @@ input[type="submit"].error {
 }
 
 .btn {
-  background: rgb(38, 39, 42);
+  background-color: rgb(61, 62, 68);
   border: none;
   padding: 10px 25px;
   color: white;

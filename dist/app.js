@@ -85,9 +85,19 @@ module.exports = function (settings) {
 
       console.log(type + ' not found: ' + data);
 
-      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      var error = {
+        status: 404,
+        message: type + ' not found: ' + data
+      };
 
-      res.end(type + ' not found: ' + data);
+      render(__dirname.replace('/dist', '/views/error.html'), error, appRoutes['/error']).then(function (response) {
+
+        res.writeHead(404, {
+          'Content-Type': 'text/html'
+        });
+
+        res.end(response);
+      });
     }
 
     // parseVars takes a requested route and an array of pre-interpolated
@@ -165,7 +175,7 @@ module.exports = function (settings) {
           filepath = filepath.replace('/views', '/' + parentDir + '/breadbox/views');
           controller = appRoutes[routeName];
           if (typeof controller === 'undefined') {
-            fourZeroFour('controller', routeName);
+            fourZeroFour('Controller', routeName);
           }
         }
       }
@@ -210,7 +220,7 @@ module.exports = function (settings) {
     // and sends the result to the client.
     function getTemplate() {
 
-      render(routeName.replace(/.html$/, ''), filepath, request, controller).then(function (response, headers) {
+      render(filepath, request, controller, res).then(function (response, headers) {
 
         if (routeName === logoutPage) {
 
@@ -224,7 +234,7 @@ module.exports = function (settings) {
 
           headers['Content-Type'] = headers['Content-Type'] || mime[extension];
 
-          res.writeHead(200, headers);
+          res.writeHead(headers.status || 200, headers);
         }
 
         res.end(response);
@@ -281,7 +291,7 @@ module.exports = function (settings) {
           });
         } else {
 
-          fourZeroFour('file', filepath);
+          fourZeroFour('File', filepath);
         }
       });
     }

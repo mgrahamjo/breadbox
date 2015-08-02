@@ -10,17 +10,17 @@ var db = require('./db'),
 
 module.exports = {
 
-    '/admin': function(response, request) {
+    '/admin': function admin(response, request) {
 
         var collections = [];
 
-        request.getSession.then(function(session) {
+        request.getSession.then(function (session) {
 
-            fs.readdir(parentDir + '/models', function(err, files) {
+            fs.readdir(parentDir + '/models', function (err, files) {
 
                 if (files) {
 
-                    files.forEach(function(file, index) {
+                    files.forEach(function (file, index) {
 
                         collections.push(file.replace('.json', ''));
 
@@ -37,7 +37,7 @@ module.exports = {
         });
     },
 
-    '/admin/{{collection}}': function(response, request) {
+    '/admin/{{collection}}': function adminCollection(response, request) {
 
         var context = {
             collection: request.params.collection,
@@ -50,7 +50,7 @@ module.exports = {
 
                 context.json = JSON.parse(request.body.json);
 
-                db.put(request.params.collection, context.json).then(function() {
+                db.put(request.params.collection, context.json).then(function () {
 
                     context.json = JSON.stringify(context.json, null, 4);
 
@@ -58,12 +58,11 @@ module.exports = {
 
                     response.resolve(context, thisDir + '/views/collection.html');
                 });
-
-            } catch(err) {
+            } catch (err) {
 
                 console.error(err);
 
-                db.get(request.params.collection).then(function(data) {
+                db.get(request.params.collection).then(function (data) {
 
                     context.json = JSON.stringify(data, null, 4);
 
@@ -72,10 +71,9 @@ module.exports = {
                     response.resolve(context, thisDir + '/views/collection.html');
                 });
             }
-
         } else {
 
-            db.get(request.params.collection).then(function(data) {
+            db.get(request.params.collection).then(function (data) {
 
                 context.json = JSON.stringify(data, null, 4);
 
@@ -84,14 +82,14 @@ module.exports = {
         }
     },
 
-    '/admin/new/{{collection}}': function(response, request) {
+    '/admin/new/{{collection}}': function adminNewCollection(response, request) {
 
         var context = {
             collection: request.params.collection,
             className: 'admin'
         };
 
-        fs.exists(parentDir + '/models/' + request.params.collection + '.json', function(exists) {
+        fs.exists(parentDir + '/models/' + request.params.collection + '.json', function (exists) {
 
             if (exists) {
 
@@ -99,10 +97,9 @@ module.exports = {
                     'Content-Type': 'text/html; charset=UTF-8',
                     'Location': '/admin/' + request.params.collection
                 });
-
             } else {
 
-                db.put(request.params.collection, {}).then(function() {
+                db.put(request.params.collection, {}).then(function () {
 
                     response.resolve(context, thisDir + '/views/collection.html');
                 });
@@ -110,7 +107,7 @@ module.exports = {
         });
     },
 
-    '/admin/new-user': function(response, request) {
+    '/admin/new-user': function adminNewUser(response, request) {
 
         var context = {
             className: 'admin'
@@ -120,15 +117,15 @@ module.exports = {
 
             try {
 
-                bcrypt.genSalt(10, (err, salt) => {
-                    bcrypt.hash(request.body.password, salt, null, (err, passHash) => {
-                        
-                        let user = {
+                bcrypt.genSalt(10, function (err, salt) {
+                    bcrypt.hash(request.body.password, salt, null, function (err, passHash) {
+
+                        var user = {
                             password: passHash,
                             role: request.body.role
                         };
 
-                        db.put('users', user, request.body.name).then(function(success) {
+                        db.put('users', user, request.body.name).then(function (success) {
 
                             context.saved = success;
 
@@ -136,8 +133,7 @@ module.exports = {
                         });
                     });
                 });
-
-            } catch(err) {
+            } catch (err) {
 
                 console.error(err);
 
@@ -145,16 +141,15 @@ module.exports = {
 
                 response.resolve(context, thisDir + '/views/newuser.html');
             }
-
         } else {
 
             response.resolve(context, thisDir + '/views/newuser.html');
-        }        
+        }
     },
 
-    '/admin/delete/{{collection}}': function(response, request) {
+    '/admin/delete/{{collection}}': function adminDeleteCollection(response, request) {
 
-        db.drop(request.params.collection).then(function() {
+        db.drop(request.params.collection).then(function () {
 
             request.redirect(302, {
                 'Content-Type': 'text/html; charset=UTF-8',
@@ -163,7 +158,7 @@ module.exports = {
         });
     },
 
-    '/login': function(response, request) {
+    '/login': function login(response, request) {
 
         if (request.body) {
 
@@ -172,9 +167,9 @@ module.exports = {
                 var user = request.body.username,
                     pass = request.body.password;
 
-                db.get('users').then(function(users) {
+                db.get('users').then(function (users) {
 
-                    bcrypt.compare(pass, users[user].password, function(err, success) {
+                    bcrypt.compare(pass, users[user].password, function (err, success) {
 
                         if (success) {
 
@@ -184,49 +179,45 @@ module.exports = {
                             });
 
                             // HANDLE UNDEFINED FROM
-                        
+
                             request.redirect(302, {
                                 'Set-Cookie': 'user=' + user,
                                 'Content-Type': 'text/html; charset=UTF-8',
                                 'Location': request.body.from || '/'
                             });
-                        
                         } else {
 
                             response.resolve({ failed: true, from: request.query.from });
                         }
                     });
                 });
-
-            } catch(err) {
+            } catch (err) {
 
                 console.error(err);
 
                 response.resolve({ failed: true });
-
             }
-
         } else {
 
             response.resolve({ from: request.query.from });
         }
-    }, 
+    },
 
-    '/logout': function(response, request) {
+    '/logout': function logout(response, request) {
 
-        request.getSession.then(function(data) {
+        request.getSession.then(function (data) {
 
             if (data) {
                 session.end(data.name);
             }
 
-            response.resolve(undefined, undefined, {'Set-Cookie': 'user=""'});
+            response.resolve(undefined, undefined, { 'Set-Cookie': 'user=""' });
         });
     },
 
-    '/error': function(response, error) {
+    '/error': function error(response, _error) {
 
-        response.resolve({ error: error, className: 'error-page' });
+        response.resolve({ error: _error, className: 'error-page' });
     }
 
 };

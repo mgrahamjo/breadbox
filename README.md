@@ -1,6 +1,38 @@
 # Breadbox
 
-A tiny Node JS MVC framework, currently in development. 
+A Node JS MVC framework that priortizes simplicity. Currently in development. 
+
+## Hello World
+
+```
+// index.js
+
+var breadbox = require('breadbox');
+
+breadbox({
+    controllers: {
+        '/index': function(response) {
+            response.resolve({ person: "World" });
+        }
+    }
+});
+```
+
+```
+<!-- index.html -->
+
+<h1>Hello, {{person}}!</h1>
+```
+
+Run `node index.js` then open http://localhost:1337 in your browser.
+
+## Options
+
+The breadbox function accepts a configuration object with a few optional properties:
+* `controllers`: an object on which keys are route paths and values are functions. More details below.
+* `loginPage`: the relative URL of the page where users can log in. Defaults to '/login'.
+* `logoutPage`: the relative URL of the page that logs users out. Defaults to '/logout'.
+* `port`: the port on which the app should run. Defaults to 1337.
 
 ## Templates
 
@@ -22,33 +54,33 @@ Templates go in the `views/` folder.
 
 ### Variables
 
-`{{<variable>}}` will be replaced with the value of the corresponding variable.
+`{{<variable> || <expression>}}` will be replaced with the result of evaluating the given expression or variable using the context provided by the controller.
 
 Variables are automatically HTML escaped. To bypass this security measure, use `{{<variable> | safe }}`.
 
-## Routes
+## Controllers
 
-Routes allow you to do three things:
+Controllers allow you to do a number things:
 * define URLs
 * map those URLs to templates and contexts
 * define URL parameters
+* identify routes that require authentication
+* add headers to your responses
+* access request & session data
 
 ### Defining URLs
 
-Routes.js defines an array-like object. On this object, each key is a URL, and each value is a function. 
+The keys on the controllers object you pass to the breadbox function will be used to match requested URLs to your controller functions. The root URL, '/', is matched to the '/index' controller key. '.html' extensions are ignored. 
 
 ```
-module.exports = {
-
-    '/index': function(response, request) {
-
-    	var context = {
-    		items: ['apples', 'oranges', 'bananas']
-    	};
-
-        response.resolve(context);
-    }
+var controllers = {
+    '/index': require('controllers/index'),
+    '/about-me': require('controllers/about-me')
 };
+
+breadbox({
+    controllers: controllers
+});
 
 ```
 
@@ -103,7 +135,7 @@ Sometimes you don't know exactly what the URL will look like when you want to re
 In this case, you need to use a placeholder in the route, with the expectation that it will map to a blog post ID. 
 
 ```
-module.exports = {
+var controllers = {
 
     '/posts/{{id}}': function(response, request) {
 

@@ -4,9 +4,12 @@ var db = require('./db'),
     fs = require('fs'),
     bcrypt = require('bcrypt-nodejs'),
     path = require('path'),
-    session = require('./session'),
     thisDir = path.join(__dirname, '..'),
     parentDir = path.join(__dirname, '../../..');
+
+function encode(str) {
+    return new Buffer(str).toString('base64').replace('=', '');
+}
 
 module.exports = {
 
@@ -14,26 +17,23 @@ module.exports = {
 
         var collections = [];
 
-        request.getSession.then(function (session) {
+        fs.readdir(parentDir + '/models', function (err, files) {
 
-            fs.readdir(parentDir + '/models', function (err, files) {
+            if (files) {
 
-                if (files) {
+                files.forEach(function (file, index) {
 
-                    files.forEach(function (file, index) {
+                    collections.push(file.replace('.json', ''));
 
-                        collections.push(file.replace('.json', ''));
-
-                        if (index === files.length - 1) {
-                            response.resolve({
-                                collections: collections,
-                                className: 'admin',
-                                userRole: session.role
-                            });
-                        }
-                    });
-                }
-            });
+                    if (index === files.length - 1) {
+                        response.resolve({
+                            collections: collections,
+                            className: 'admin',
+                            userRole: request.session.get(request.cookies.id).role
+                        });
+                    }
+                });
+            }
         });
     },
 
@@ -160,64 +160,74 @@ module.exports = {
 
     '/login': function login(response, request) {
 
+        var context = { className: 'admin' };
+
         if (request.body) {
 
+            context.from = request.body.from;
+
             try {
+                (function () {
 
-                var user = request.body.username,
-                    pass = request.body.password;
+                    var user = request.body.username,
+                        pass = request.body.password;
 
-                db.get('users').then(function (users) {
+                    db.get('users').then(function (users) {
 
-                    bcrypt.compare(pass, users[user].password, function (err, success) {
+                        if (users[user]) {
 
-                        if (success) {
+                            bcrypt.compare(pass, users[user].password, function (err, success) {
 
-                            session.save(user, {
-                                name: user,
-                                role: users[user].role
-                            });
+                                if (success) {
 
-                            // HANDLE UNDEFINED FROM
+                                    var id = encode(user);
 
-                            request.redirect(302, {
-                                'Set-Cookie': 'user=' + user,
-                                'Content-Type': 'text/html; charset=UTF-8',
-                                'Location': request.body.from || '/'
+                                    request.session.save(id, {
+                                        name: user,
+                                        role: users[user].role
+                                    });
+
+                                    request.redirect(302, {
+                                        'Set-Cookie': 'id=' + id,
+                                        'Content-Type': 'text/html; charset=UTF-8',
+                                        'Location': request.body.from
+                                    });
+                                } else {
+                                    context.failed = true;
+                                }
                             });
                         } else {
-
-                            response.resolve({ failed: true, from: request.query.from });
+                            context.failed = true;
                         }
                     });
-                });
+                })();
             } catch (err) {
 
                 console.error(err);
 
-                response.resolve({ failed: true });
+                context.failed = true;
             }
         } else {
 
-            response.resolve({ from: request.query.from });
+            context.from = request.query.from || '/admin';
         }
+
+        response.resolve(context);
     },
 
     '/logout': function logout(response, request) {
 
-        request.getSession.then(function (data) {
+        request.session.end(request.cookies.id);
 
-            if (data) {
-                session.end(data.name);
-            }
-
-            response.resolve(undefined, undefined, { 'Set-Cookie': 'user=""' });
-        });
+        response.resolve({
+            className: 'admin',
+            loginPage: request.settings.loginPage
+        }, undefined, { 'Set-Cookie': 'id=', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT' });
     },
 
     '/error': function error(response, _error) {
 
-        response.resolve({ error: _error, className: 'error-page' });
+        response.resolve({ error: _error });
     }
 
 };

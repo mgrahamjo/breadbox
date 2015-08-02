@@ -6,16 +6,16 @@
 
 </div>
 
-<form action="/login?from={{from}}" method="post" class="form">
+<form action="/login" method="post" class="form">
 
 	{{ if failed }}
 	<p class="fail">Wrong.</p>
 	{{ endif }}
 
-	<label>Username</label>
+	<p>Username</p>
 	<input name="username" type="text"><br>
 
-	<label>Password</label>
+	<p>Password</p>
 	<input name="password" type="password">
 
 	<input type="hidden" name="from" value="{{from}}">
@@ -23,6 +23,16 @@
 	<input type="submit" value="log in">
 
 </form>
+
+<script>
+
+	var $ = function(selector) {
+		return [].slice.call(document.querySelectorAll(selector))[0];
+	};
+
+	$('[name="username"]').focus();
+
+</script>
 
 </body>
 

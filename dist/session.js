@@ -1,29 +1,24 @@
 'use strict';
 
-var db = require('./db'),
-    promise = require('./promise');
+module.exports = function () {
 
-module.exports = {
+	var sessions = {};
 
-	save: function save(id, data) {
+	return {
 
-		db.put('sessions', data, id);
-	},
+		save: function save(id, data) {
 
-	end: function end(id) {
+			sessions[id] = data;
+		},
 
-		db.drop('sessions', id);
-	},
+		end: function end(id) {
 
-	get: function get(id) {
+			sessions[id] = undefined;
+		},
 
-		var session = promise();
+		get: function get(id) {
 
-		db.get('sessions').then(function (sessions) {
-
-			session.resolve(sessions ? sessions[id] : null);
-		});
-
-		return session;
-	}
+			return sessions[id];
+		}
+	};
 };

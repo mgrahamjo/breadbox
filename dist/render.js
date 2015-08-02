@@ -11,11 +11,11 @@ var read = require('fs').readFile,
     endfor = /{{\s*?endfor\s*?}}/i,
     ifBlock = /{{\s*?if\s*?([\s\S]*?)\s*?}}/i,
     endif = /{{\s*?endif\s*?}}/i,
-    res;
+    response = undefined;
 
 function error(description, info) {
 
-    console.log(description + '<br><br>' + info);
+    console.error(description + '. ' + info);
 
     var errorData = {
         status: 500,
@@ -26,11 +26,7 @@ function error(description, info) {
 
         read(__dirname.replace('/dist', '/views/error.html'), { encoding: 'utf8' }, function (err, template) {
 
-            res.writeHead(500, {
-                'Content-Type': 'text/html'
-            });
-
-            res.end(parse(template, context));
+            response.resolve(parse(template, context), { status: errorData.status });
         });
     });
 }
@@ -42,11 +38,10 @@ function regexIndex(str, regex, startpos) {
 
 function parseVars(template, context, match) {
 
-    var value,
+    var value = undefined,
         raw = match[0],
         filters = match[1].split('|'),
-        ref = filters.shift(0),
-        success;
+        ref = filters.shift(0);
 
     filters.forEach(function (filter, i) {
         filters[i] = filter.replace(/\s/g, '');
@@ -57,12 +52,14 @@ function parseVars(template, context, match) {
         if (typeof value === 'string' && filters.indexOf('safe') === -1) {
             value = htmlEscape(value);
         }
-        success = true;
     } catch (err) {
-        error('error at run(ref, context) in the parseVars function of render.js.', err);
+
+        console.error(err);
+
+        value = '';
     }
 
-    return success ? parse(template.replace(raw, value), context) : undefined;
+    return parse(template.replace(raw, value), context);
 }
 
 function parseLoops(template, context, match) {
@@ -73,14 +70,13 @@ function parseLoops(template, context, match) {
         html = match[3],
         array = [],
         output = '',
-        initKeyValue = context[key],
-        success;
+        initKeyValue = context[key];
 
     try {
         array = run(arrName, context);
-        success = true;
     } catch (err) {
-        error('error at run(arrName, context) in the parseLoops function of render.js.', err);
+        // array is undefined
+        console.error(err);
     }
 
     array.forEach(function (value) {
@@ -90,7 +86,7 @@ function parseLoops(template, context, match) {
 
     context[key] = initKeyValue;
 
-    return success ? parse(template.replace(raw, output), context) : undefined;
+    return parse(template.replace(raw, output), context);
 }
 
 function parseIfs(template, context, match) {
@@ -98,7 +94,7 @@ function parseIfs(template, context, match) {
     var raw = match[0],
         value = match[1],
         html = match[2],
-        doShow;
+        doShow = undefined;
 
     try {
         doShow = run(value, context);
@@ -112,8 +108,8 @@ function parseIfs(template, context, match) {
 function parseIncludes(template, callback) {
 
     var match = includeRegx.exec(template),
-        raw,
-        path;
+        raw = undefined,
+        path = undefined;
 
     if (match !== null) {
 
@@ -138,7 +134,7 @@ function parseIncludes(template, callback) {
 // a regex that ignores the correct number of closing tags.
 function getLoopRegx(template) {
 
-    var result,
+    var result = undefined,
         secondHalf = template.split(forIn)[1];
 
     if (!secondHalf) {
@@ -158,7 +154,7 @@ function getLoopRegx(template) {
 
 function getIfRegx(template) {
 
-    var result,
+    var result = undefined,
         secondHalf = template.split(ifBlock)[1];
 
     if (!secondHalf) {
@@ -179,8 +175,8 @@ function getIfRegx(template) {
 // Parsing functions that run syncronously are executed here.
 function parse(template, context) {
 
-    var match,
-        regx,
+    var match = undefined,
+        regx = undefined,
         loopFirst = regexIndex(template, forIn) < regexIndex(template, ifBlock);
 
     if (loopFirst) {
@@ -235,11 +231,9 @@ function getContext(request, controller) {
     return context;
 }
 
-function render(filepath, request, controller, resObj) {
+function render(filepath, request, controller) {
 
-    var response = promise();
-
-    res = resObj;
+    response = promise();
 
     getContext(request, controller).then(function (context, customPath, headers) {
 
@@ -258,7 +252,12 @@ function render(filepath, request, controller, resObj) {
                 // the template and put together the response.
                 // First, lets get any included partials so we have the full template.
                 parseIncludes(template, function (fullTemplate) {
-                    response.resolve(parse(fullTemplate, context), headers);
+
+                    var parsed = parse(fullTemplate, context);
+
+                    if (parsed) {
+                        response.resolve(parsed, headers);
+                    }
                 });
             }
         });

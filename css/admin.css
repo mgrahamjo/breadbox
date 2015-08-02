@@ -29,6 +29,11 @@ textarea.error {
   color: rgb(218, 73, 73);
 }
 
+input[type="text"].error {
+  border: 1px solid rgb(218, 73, 73);
+  background-color: #FFE4E9;
+}
+
 .center {
   text-align: center;
 }
@@ -61,7 +66,7 @@ h1 {
   float: left;
 }
 
-input[type="submit"] {
+input[type="submit"], .btn.login {
   position: fixed;
   top: calc(100% - 50px);
   left: 13px;
@@ -145,7 +150,7 @@ input[type="submit"].error {
   text-align: center;
 }
 
-.admin .form p {
+.admin p {
   color: white;
 }
 
@@ -157,12 +162,15 @@ input[type="submit"].error {
   float: left;
 }
 
-.name {
-  margin: 20px 20px 0 0;
+input[type="text"], input[type="password"] {
   padding: 11px 10px;
   background-color: rgb(203, 203, 203);
   border: 1px solid black;
   color: rgb(56, 56, 56);
   border-radius: 4px;
   font-size: 13px;
+}
+
+.name {
+  margin: 20px 20px 0 0;
 }

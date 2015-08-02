@@ -2,7 +2,7 @@
 
 <div class="header">
     
-    <h1>Breadbox - {{collection}}</h1>
+    <h1>Breadbox</h1>
 
     {{if saved}}
         <div class="msg saved">Saved!</div>
@@ -37,7 +37,8 @@
 <script>
 
     var $ = function(selector) {
-        return [].slice.call(document.querySelectorAll(selector));
+        var els = [].slice.call(document.querySelectorAll(selector));
+        return els.length > 1 ? els : els[0];
     };
 
     function validate() {
@@ -51,14 +52,14 @@
             }
         });
 
-        if ($('[type="password"]')[0].value !== $('[type="password"]')[1].value) {
+        if ($('[type="password"]').value !== $('[type="password"]')[1].value) {
             valid = false;
         }
 
         if (!valid) {
-            $('[type="submit"]')[0].classList.add('error');
+            $('[type="submit"]').classList.add('error');
         } else {
-            $('[type="submit"]')[0].classList.remove('error');
+            $('[type="submit"]').classList.remove('error');
         }
 
         return valid;

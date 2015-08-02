@@ -28,14 +28,20 @@
 <script>
 
 	var $ = function(selector) {
-		return [].slice.call(document.querySelectorAll(selector));
+		var els = [].slice.call(document.querySelectorAll(selector));
+		return els.length > 1 ? els : els[0];
 	};
 
-	$('#new-file')[0].addEventListener('click', function() {
-        location.href = '/admin/new/' + $('.input')[0].value.replace(/\.json$/i, '');
+	$('#new-file').addEventListener('click', function() {
+		if ($('.input').value) {
+	        location.href = '/admin/new/' + $('.input').value.replace(/\.json$/i, '');
+	        $('.input').classList.remove('error');
+	    } else {
+	    	$('.input').classList.add('error');
+	    }
     });
 
-    $('#new-user')[0].addEventListener('click', function() {
+    $('#new-user').addEventListener('click', function() {
         location.href = '/admin/new-user';
     });
 

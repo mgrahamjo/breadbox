@@ -28,118 +28,122 @@ function save(path, data, response) {
         if (err) {
             throw err;
         } else {
-            response.resolve('success');
+            response.resolve(data);
         }
     });
 }
 
-module.exports = {
+function get(path, internal) {
 
-    get: function get(path) {
+    console.log('DB: get ' + path + (internal ? ' (internal)' : ''));
 
-        console.log('DB: get ' + path);
+    var response = promise();
 
-        var response = promise();
+    path = modelPath + path + '.json';
 
-        path = modelPath + path + '.json';
+    fs.exists(path, function (exists) {
 
-        fs.exists(path, function (exists) {
+        if (exists) {
+
+            fs.readFile(path, { encoding: 'utf8' }, function (err, data) {
+                console.log(data);
+                if (err) {
+                    throw err;
+                }
+
+                try {
+
+                    response.resolve(JSON.parse(data));
+                } catch (err) {
+
+                    throw err;
+                }
+            });
+        } else {
+
+            response.resolve(undefined);
+        }
+    });
+
+    return response;
+}
+
+// If a key is provided, the put method first gets the freshest data
+// before updating that key. Otherwise it updates the whole collection.
+function put(path, value, key) {
+
+    var response = promise();
+
+    console.log('DB: put ' + value + ' in ' + path + ' at key ' + key);
+
+    if (key) {
+
+        fs.exists(modelPath + path + '.json', function (exists) {
 
             if (exists) {
 
-                fs.readFile(path, { encoding: 'utf8' }, function (err, data) {
+                get(path, true).then(function (data) {
 
-                    if (err) {
-                        throw err;
-                    }
+                    vm.createContext(data);
 
-                    try {
+                    vm.runInNewContext(key + '=' + JSON.stringify(value), data);
 
-                        response.resolve(JSON.parse(data));
-                    } catch (err) {
-
-                        response.resolve(err);
-                    }
+                    save(path, data, response);
                 });
             } else {
 
-                response.resolve(null);
+                save(path, value, response);
             }
         });
+    } else {
 
-        return response;
-    },
-
-    // If a key is provided, the put method first gets the freshest data
-    // before updating that key. Otherwise it updates the whole collection.
-    put: function put(path, value, key) {
-
-        var db = this,
-            response = promise();
-
-        console.log('DB: put ' + value + ' in ' + path + ' at key ' + key);
-
-        if (key) {
-
-            fs.exists(modelPath + path + '.json', function (exists) {
-
-                if (exists) {
-
-                    db.get(path).then(function (data) {
-
-                        vm.createContext(data);
-
-                        vm.runInNewContext(key + '=' + JSON.stringify(value), data);
-
-                        save(path, data, response);
-                    });
-                } else {
-
-                    save(path, value, response);
-                }
-            });
-        } else {
-
-            save(path, value, response);
-        }
-
-        return response;
-    },
-
-    // deletes the collection, or, if key is provided,
-    // deletes that property from the collection
-    drop: function drop(path, key) {
-
-        var db = this,
-            response = promise();
-
-        console.log('DB: drop ' + path + '; key ' + key);
-
-        if (key) {
-
-            fs.exists(modelPath + path + '.json', function (exists) {
-
-                if (exists) {
-
-                    db.get(path).then(function (data) {
-
-                        vm.createContext(data);
-
-                        vm.runInNewContext('delete ' + key, data);
-
-                        save(path, data, response);
-                    });
-                }
-            });
-        } else {
-
-            fs.unlink(modelPath + path + '.json', function (err) {
-
-                response.resolve(err);
-            });
-        }
-
-        return response;
+        save(path, value, response);
     }
+
+    return response;
+}
+
+// deletes the collection, or, if key is provided,
+// deletes that property from the collection
+function drop(path, key) {
+
+    var response = promise();
+
+    console.log('DB: drop ' + path + '; key ' + key);
+
+    if (key) {
+
+        fs.exists(modelPath + path + '.json', function (exists) {
+
+            if (exists) {
+
+                get(path, true).then(function (data) {
+
+                    vm.createContext(data);
+
+                    vm.runInNewContext('delete ' + key, data);
+
+                    save(path, data, response);
+                });
+            }
+        });
+    } else {
+
+        fs.unlink(modelPath + path + '.json', function (err) {
+
+            response.resolve(err);
+        });
+    }
+
+    return response;
+}
+
+module.exports = {
+
+    get: get,
+
+    put: put,
+
+    drop: drop
 
 };

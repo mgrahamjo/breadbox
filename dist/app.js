@@ -5,12 +5,12 @@ var http = require('http'),
     fs = require('fs'),
     path = require('path'),
     render = require('./render'),
-    promise = require('./promise'),
-    session = require('./session'),
+    session = require('./session')(),
     appRoutes = require('./routes'),
     formidable = require('formidable');
 
-module.exports = function (settings) {
+module.exports = function () {
+  var settings = arguments[0] === undefined ? {} : arguments[0];
 
   var variableUrls = [],
       staticUrls = [],
@@ -62,10 +62,7 @@ module.exports = function (settings) {
     // params is for URL parameters
     params = {},
         controllers = settings.controllers,
-        loginPage = settings.loginPage || '/login',
-        logoutPage = settings.logoutPage || '/logout',
         authenticate = false,
-        sessionData = promise(),
         mime = {
       '.css': 'text/css; charset=UTF-8',
       '.js': 'text/javascript; charset=UTF-8',
@@ -78,21 +75,26 @@ module.exports = function (settings) {
     },
         isView = extension === '' || extension === '.html',
         cookies = {},
-        controller,
-        request;
+        controller = undefined,
+        request = undefined;
 
-    function fourZeroFour(type, data) {
+    settings.loginPage = settings.loginPage || '/login';
+    settings.logoutPage = settings.logoutPage || '/logout';
 
-      console.log(type + ' not found: ' + data);
+    function error(message, data, status) {
 
-      var error = {
-        status: 404,
-        message: type + ' not found: ' + data
+      console.error(message + '<br><br>' + data);
+
+      status = status || 404;
+
+      var errorData = {
+        status: status,
+        message: message + '<br><br>' + data
       };
 
-      render(__dirname.replace('/dist', '/views/error.html'), error, appRoutes['/error']).then(function (response) {
+      render(__dirname.replace('/dist', '/views/error.html'), errorData, appRoutes['/error']).then(function (response) {
 
-        res.writeHead(404, {
+        res.writeHead(status, {
           'Content-Type': 'text/html'
         });
 
@@ -154,7 +156,7 @@ module.exports = function (settings) {
 
     function login() {
       res.writeHead(302, {
-        'Location': loginPage + '?from=' + pathname
+        'Location': settings.loginPage + '?from=' + pathname
       });
       res.end();
     }
@@ -163,6 +165,29 @@ module.exports = function (settings) {
       res.writeHead(status, headers);
       res.end();
     }
+
+    // getTemplate passes the name of the route we want,
+    // the path to the default template for this route,
+    // and the request object to our rendering function,
+    // and sends the result to the client.
+    function getTemplate() {
+
+      render(filepath, request, controller).then(function (response) {
+        var headers = arguments[1] === undefined ? {} : arguments[1];
+
+        var status = headers.status;
+
+        delete headers.status;
+
+        headers['Content-Type'] = headers['Content-Type'] || mime[extension];
+
+        res.writeHead(status || 200, headers);
+
+        res.end(response);
+      });
+    }
+
+    filepath = fixDoubleSlashes(filepath);
 
     if (isView) {
 
@@ -175,7 +200,7 @@ module.exports = function (settings) {
           filepath = filepath.replace('/views', '/' + parentDir + '/breadbox/views');
           controller = appRoutes[routeName];
           if (typeof controller === 'undefined') {
-            fourZeroFour('Controller', routeName);
+            error('Controller not found:', routeName);
           }
         }
       }
@@ -196,80 +221,45 @@ module.exports = function (settings) {
             cookieParts = cookie.split('=');
             cookies[cookieParts[0].trim()] = cookieParts[1].trim();
           });
-
-          if (cookies.user) {
-            session.get(cookies.user).then(function (data) {
-              sessionData.resolve(data);
-            });
-          }
         })();
       }
 
-      if (authenticate && pathname !== loginPage && !cookies.user) {
+      if (authenticate && pathname !== settings.loginPage && !cookies.id) {
+
         login();
-      }
-    }
+      } else if (controller) {
 
-    filepath = fixDoubleSlashes(filepath);
+        request = {
+          data: req,
+          params: params,
+          query: parsedUrl.query,
+          cookies: cookies,
+          redirect: redirect,
+          settings: settings,
+          session: session
+        };
 
-    console.log('Request: ' + filepath);
+        console.log('Request: ' + filepath);
 
-    // getTemplate passes the name of the route we want,
-    // the path to the default template for this route,
-    // and the request object to our rendering function,
-    // and sends the result to the client.
-    function getTemplate() {
+        // If this is a post request, we'll let formidable handle
+        // the buffer stream and add the post data to the request object.
+        if (req.method.toLowerCase() === 'post') {
 
-      render(filepath, request, controller, res).then(function (response, headers) {
-
-        if (routeName === logoutPage) {
-
-          res.writeHead(200, {
-            'Set-Cookie': 'user=',
-            'Content-Type': mime[extension]
+          new formidable.IncomingForm().parse(req, function (err, fields, files) {
+            if (err) {
+              error('Post body couldn\'t be parsed.', err);
+            } else {
+              request.body = fields;
+              request.files = files;
+              getTemplate();
+            }
           });
+
+          // If this is not a post request,
+          // leave the request object as-is and render the template.
         } else {
-
-          headers = headers || {};
-
-          headers['Content-Type'] = headers['Content-Type'] || mime[extension];
-
-          res.writeHead(headers.status || 200, headers);
-        }
-
-        res.end(response);
-      });
-    }
-
-    // If there's a template to get, we have some work to do.
-    if (isView && controller) {
-
-      request = {
-        data: req,
-        params: params,
-        query: parsedUrl.query,
-        getSession: sessionData,
-        cookies: cookies,
-        redirect: redirect
-      };
-
-      // If this is a post request, we'll let formidable handle
-      // the buffer stream and add the post data to the request object.
-      if (req.method.toLowerCase() === 'post') {
-
-        new formidable.IncomingForm().parse(req, function (err, fields, files) {
-          if (err) {
-            throw err;
-          }
-          request.body = fields;
-          request.files = files;
           getTemplate();
-        });
-
-        // If this is not a post request,
-        // leave the request object as-is and render the template.
-      } else {
-        getTemplate();
+        }
       }
 
       // If this isn't an html request, send the file directly.
@@ -284,14 +274,20 @@ module.exports = function (settings) {
           fs.readFile(filepath, function (err, file) {
 
             if (err) {
-              throw err;
-            }
 
-            res.end(file);
+              error('Asset couldn\'t be read.', err, 500);
+            } else {
+
+              res.writeHead(200, {
+                'Content-Type': mime[extension]
+              });
+
+              res.end(file);
+            }
           });
         } else {
 
-          fourZeroFour('File', filepath);
+          error('Asset not found:', filepath);
         }
       });
     }

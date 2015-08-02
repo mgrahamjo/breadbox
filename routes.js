@@ -1,45 +1,45 @@
 'use strict';
 
-var db = require('./db'),
+const db = require('./db'),
     fs = require('fs'),
     bcrypt = require('bcrypt-nodejs'),
     path = require('path'),
-    session = require('./session'),
     thisDir = path.join(__dirname, '..'),
     parentDir = path.join(__dirname, '../../..');
+
+function encode(str) {
+    return new Buffer(str).toString('base64').replace('=', '');
+}
 
 module.exports = {
 
     '/admin': function(response, request) {
 
-        var collections = [];
+        let collections = [];
 
-        request.getSession.then(function(session) {
+        fs.readdir(parentDir + '/models', (err, files) => {
 
-            fs.readdir(parentDir + '/models', function(err, files) {
+            if (files) {
 
-                if (files) {
+                files.forEach((file, index) => {
 
-                    files.forEach(function(file, index) {
+                    collections.push(file.replace('.json', ''));
 
-                        collections.push(file.replace('.json', ''));
-
-                        if (index === files.length - 1) {
-                            response.resolve({
-                                collections: collections,
-                                className: 'admin',
-                                userRole: session.role
-                            });
-                        }
-                    });
-                }
-            });
+                    if (index === files.length - 1) {
+                        response.resolve({
+                            collections: collections,
+                            className: 'admin',
+                            userRole: request.session.get(request.cookies.id).role
+                        });
+                    }
+                });
+            }
         });
     },
 
     '/admin/{{collection}}': function(response, request) {
 
-        var context = {
+        let context = {
             collection: request.params.collection,
             className: 'admin'
         };
@@ -50,7 +50,7 @@ module.exports = {
 
                 context.json = JSON.parse(request.body.json);
 
-                db.put(request.params.collection, context.json).then(function() {
+                db.put(request.params.collection, context.json).then(() => {
 
                     context.json = JSON.stringify(context.json, null, 4);
 
@@ -63,7 +63,7 @@ module.exports = {
 
                 console.error(err);
 
-                db.get(request.params.collection).then(function(data) {
+                db.get(request.params.collection).then(data => {
 
                     context.json = JSON.stringify(data, null, 4);
 
@@ -75,7 +75,7 @@ module.exports = {
 
         } else {
 
-            db.get(request.params.collection).then(function(data) {
+            db.get(request.params.collection).then(data => {
 
                 context.json = JSON.stringify(data, null, 4);
 
@@ -86,12 +86,12 @@ module.exports = {
 
     '/admin/new/{{collection}}': function(response, request) {
 
-        var context = {
+        let context = {
             collection: request.params.collection,
             className: 'admin'
         };
 
-        fs.exists(parentDir + '/models/' + request.params.collection + '.json', function(exists) {
+        fs.exists(parentDir + '/models/' + request.params.collection + '.json', exists => {
 
             if (exists) {
 
@@ -102,7 +102,7 @@ module.exports = {
 
             } else {
 
-                db.put(request.params.collection, {}).then(function() {
+                db.put(request.params.collection, {}).then(() => {
 
                     response.resolve(context, thisDir + '/views/collection.html');
                 });
@@ -112,7 +112,7 @@ module.exports = {
 
     '/admin/new-user': function(response, request) {
 
-        var context = {
+        let context = {
             className: 'admin'
         };
 
@@ -128,7 +128,7 @@ module.exports = {
                             role: request.body.role
                         };
 
-                        db.put('users', user, request.body.name).then(function(success) {
+                        db.put('users', user, request.body.name).then(success => {
 
                             context.saved = success;
 
@@ -154,7 +154,7 @@ module.exports = {
 
     '/admin/delete/{{collection}}': function(response, request) {
 
-        db.drop(request.params.collection).then(function() {
+        db.drop(request.params.collection).then(() => {
 
             request.redirect(302, {
                 'Content-Type': 'text/html; charset=UTF-8',
@@ -165,68 +165,75 @@ module.exports = {
 
     '/login': function(response, request) {
 
+        let context = { className: 'admin' };
+
         if (request.body) {
+
+            context.from = request.body.from;
 
             try {
 
-                var user = request.body.username,
+                let user = request.body.username,
                     pass = request.body.password;
 
-                db.get('users').then(function(users) {
+                db.get('users').then(users => {
 
-                    bcrypt.compare(pass, users[user].password, function(err, success) {
+                    if (users[user]) {
 
-                        if (success) {
+                        bcrypt.compare(pass, users[user].password, (err, success) => {
 
-                            session.save(user, {
-                                name: user,
-                                role: users[user].role
-                            });
+                            if (success) {
 
-                            // HANDLE UNDEFINED FROM
-                        
-                            request.redirect(302, {
-                                'Set-Cookie': 'user=' + user,
-                                'Content-Type': 'text/html; charset=UTF-8',
-                                'Location': request.body.from || '/'
-                            });
-                        
-                        } else {
+                                let id = encode(user);
 
-                            response.resolve({ failed: true, from: request.query.from });
-                        }
-                    });
+                                request.session.save(id, {
+                                    name: user,
+                                    role: users[user].role
+                                });
+                            
+                                request.redirect(302, {
+                                    'Set-Cookie': 'id=' + id,
+                                    'Content-Type': 'text/html; charset=UTF-8',
+                                    'Location': request.body.from
+                                });
+                            
+                            } else {
+                                context.failed = true;
+                            }
+                        });
+                    } else {
+                        context.failed = true;
+                    }
                 });
 
             } catch(err) {
 
                 console.error(err);
 
-                response.resolve({ failed: true });
-
+                context.failed = true;
             }
 
         } else {
 
-            response.resolve({ from: request.query.from });
+            context.from = request.query.from || '/admin';
         }
+        
+        response.resolve(context);
     }, 
 
     '/logout': function(response, request) {
 
-        request.getSession.then(function(data) {
+        request.session.end(request.cookies.id);
 
-            if (data) {
-                session.end(data.name);
-            }
-
-            response.resolve(undefined, undefined, {'Set-Cookie': 'user=""'});
-        });
+        response.resolve({
+            className: 'admin', 
+            loginPage: request.settings.loginPage
+        }, undefined, {'Set-Cookie': 'id=', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT' });
     },
 
     '/error': function(response, error) {
 
-        response.resolve({ error: error, className: 'error-page' });
+        response.resolve({ error: error });
     }
 
 };

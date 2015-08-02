@@ -7,10 +7,6 @@ const db = require('./db'),
     thisDir = path.join(__dirname, '..'),
     parentDir = path.join(__dirname, '../../..');
 
-function encode(str) {
-    return new Buffer(str).toString('base64').replace('=', '');
-}
-
 module.exports = {
 
     '/admin': function(response, request) {
@@ -184,17 +180,22 @@ module.exports = {
 
                             if (success) {
 
-                                let id = encode(user);
+                                require('crypto').randomBytes(16, function(err, buffer) {
 
-                                request.session.save(id, {
-                                    name: user,
-                                    role: users[user].role
-                                });
-                            
-                                request.redirect(302, {
-                                    'Set-Cookie': 'id=' + id,
-                                    'Content-Type': 'text/html; charset=UTF-8',
-                                    'Location': request.body.from
+                                    if (err) { throw err; }
+
+                                    let id = buffer.toString('hex');
+
+                                    request.session.save(id, {
+                                        name: user,
+                                        role: users[user].role
+                                    });
+                                
+                                    request.redirect(302, {
+                                        'Set-Cookie': 'id=' + id,
+                                        'Content-Type': 'text/html; charset=UTF-8',
+                                        'Location': request.body.from
+                                    });
                                 });
                             
                             } else {

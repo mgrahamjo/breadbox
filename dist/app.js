@@ -1,13 +1,32 @@
 'use strict';
 
 var http = require('http'),
-    url = require('url'),
     fs = require('fs'),
+    db = require('./db'),
+    url = require('url'),
     path = require('path'),
     render = require('./render'),
-    session = require('./session')(),
+    session = require('./session'),
     appRoutes = require('./routes'),
     formidable = require('formidable');
+
+process.on('uncaughtException', function (err) {
+  db.put('session-dump', session.get()).then(function () {
+    throw err;
+  });
+});
+
+process.on('SIGINT', function () {
+  db.put('session-dump', session.get()).then(function () {
+    process.exit();
+  });
+});
+
+// Recover session data, if any.
+db.get('session-dump').then(function (data) {
+  session.set(data);
+  db.drop('session-dump');
+});
 
 module.exports = function () {
   var settings = arguments[0] === undefined ? {} : arguments[0];
@@ -224,7 +243,7 @@ module.exports = function () {
         })();
       }
 
-      if (authenticate && pathname !== settings.loginPage && !cookies.id) {
+      if (authenticate && pathname !== settings.loginPage && !session.get(cookies.id)) {
 
         login();
       } else if (controller) {

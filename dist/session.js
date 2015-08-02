@@ -1,10 +1,18 @@
 'use strict';
 
-module.exports = function () {
+// This is an in-memory session store.
+// Not a scalable solution.
+
+module.exports = (function () {
 
 	var sessions = {};
 
 	return {
+
+		set: function set(data) {
+
+			sessions = data || {};
+		},
 
 		save: function save(id, data) {
 
@@ -13,12 +21,12 @@ module.exports = function () {
 
 		end: function end(id) {
 
-			sessions[id] = undefined;
+			delete sessions[id];
 		},
 
 		get: function get(id) {
 
-			return sessions[id];
+			return id ? sessions[id] : sessions;
 		}
 	};
-};
+})();

@@ -46,7 +46,7 @@ function get(path, internal) {
         if (exists) {
 
             fs.readFile(path, { encoding: 'utf8' }, function (err, data) {
-                console.log(data);
+
                 if (err) {
                     throw err;
                 }
@@ -74,7 +74,7 @@ function put(path, value, key) {
 
     var response = promise();
 
-    console.log('DB: put ' + value + ' in ' + path + ' at key ' + key);
+    console.log(key ? 'DB: put ' + value + ' in ' + path + ' at key ' + key : 'DB: put ' + value + ' in ' + path);
 
     if (key) {
 
@@ -109,7 +109,7 @@ function drop(path, key) {
 
     var response = promise();
 
-    console.log('DB: drop ' + path + '; key ' + key);
+    console.log(key ? 'DB: drop ' + path + '; key ' + key : 'DB: drop all - ' + path);
 
     if (key) {
 

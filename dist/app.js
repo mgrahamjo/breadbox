@@ -1,67 +1,191 @@
 'use strict';
 
-var http = require('http'),
-    fs = require('fs'),
-    db = require('./db'),
-    url = require('url'),
-    path = require('path'),
-    render = require('./render'),
-    session = require('./session'),
-    appRoutes = require('./routes'),
-    formidable = require('formidable');
+// Global namespace
+global.breadbox = {};
 
+var
+// For creating server
+http = require('http'),
+
+// Filesystem IO
+fs = require('fs'),
+
+// For parsing URLs
+url = require('url'),
+
+// For other kinds of url parsing
+path = require('path'),
+
+// JSON database
+db = require('./db'),
+
+// Our function that returns an interpolated template
+render = require('./render'),
+
+// Session management
+session = require('./session'),
+
+// Our implementation of promise objects
+promise = require('./promise'),
+
+// Out-of-the-box controllers
+appRoutes = require('./routes'),
+
+// Third party form data parsing
+formidable = require('formidable'),
+
+// regex for matching URLs that contain variables
+varRegx = /{{([\s\S]*?)}}/g,
+
+// the parent directory of /breadbox
+parentDir = path.join(__dirname, '../..').split('/').pop(),
+
+// the full path to the root directory of the app
+basePath = __dirname.replace(parentDir + '/breadbox/dist', ''),
+
+// mime types by extension
+mime = {
+  '.css': 'text/css; charset=UTF-8',
+  '.js': 'text/javascript; charset=UTF-8',
+  '.json': 'application/json; charset=UTF-8',
+  '.txt': 'text/plain; charset=UTF-8',
+  '.html': 'text/html; charset=UTF-8',
+  '.png': 'image/png',
+  '.gif': 'image/gif',
+  '.jpg': 'image/jpeg'
+};
+
+// Before crashing, save current sessions.
 process.on('uncaughtException', function (err) {
   db.put('session-dump', session.get()).then(function () {
     throw err;
   });
 });
 
+// Before interrupting the server manually, save current sessions.
 process.on('SIGINT', function () {
   db.put('session-dump', session.get()).then(function () {
     process.exit();
   });
 });
 
-// Recover session data, if any.
+// On start up, recover session data, if any.
 db.get('session-dump').then(function (data) {
   session.set(data);
   db.drop('session-dump');
 });
 
-module.exports = function () {
-  var settings = arguments[0] === undefined ? {} : arguments[0];
+// Utility function for removing extra slashes in route strings.
+function fixDoubleSlashes(route) {
+  return route.replace(/\/\//g, '/').replace(/\/$/, '');
+}
+
+// sortRoutes accepts any number of controller objects
+// and returns an object containing those controllers
+// sorted into those whose routes contain variable placeholders (variable)
+// and those that don't (static)
+function sortRoutes() {
 
   var variableUrls = [],
-      staticUrls = [],
+      staticUrls = [];
 
-  // varRegx matches route names that contain variables
-  varRegx = /{{([\s\S]*?)}}/g;
+  var _iteratorNormalCompletion = true;
+  var _didIteratorError = false;
+  var _iteratorError = undefined;
 
-  function fixDoubleSlashes(route) {
-    return route.replace(/\/\//g, '/').replace(/\/$/, '');
-  }
+  try {
+    for (var _len = arguments.length, controllers = Array(_len), _key = 0; _key < _len; _key++) {
+      controllers[_key] = arguments[_key];
+    }
 
-  // figure out which routes have URL params
-  function sortRoutes(routeNames) {
+    for (var _iterator = controllers[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+      var routeNames = _step.value;
 
-    Object.keys(routeNames).forEach(function (route) {
-      if (route.match(varRegx)) {
-        variableUrls.push(route);
-      } else {
-        staticUrls.push(route);
+      Object.keys(routeNames).forEach(function (route) {
+        if (route.match(varRegx)) {
+          variableUrls.push(route);
+        } else {
+          staticUrls.push(route);
+        }
+      });
+    }
+  } catch (err) {
+    _didIteratorError = true;
+    _iteratorError = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion && _iterator['return']) {
+        _iterator['return']();
       }
-    });
+    } finally {
+      if (_didIteratorError) {
+        throw _iteratorError;
+      }
+    }
   }
 
-  sortRoutes(settings.controllers);
-  sortRoutes(appRoutes);
+  return {
+    variable: variableUrls,
+    'static': staticUrls
+  };
+}
+
+// initialize error handler, which needs access to the response object
+function getErrorHandler(res) {
+
+  global.breadbox.handleError = function (err, status, die) {
+
+    var result = promise();
+
+    if (err) {
+
+      console.error(err);
+
+      status = status || 500;
+
+      var errorData = {
+        status: status,
+        message: err
+      };
+
+      if (!die) {
+
+        render(__dirname.replace('/dist', '/views/error.html'), errorData, appRoutes['/error']).then(function (response) {
+
+          res.writeHead(status, {
+            'Content-Type': 'text/html'
+          });
+
+          res.end(response);
+        });
+      }
+    } else {
+
+      result.resolve();
+    }
+
+    return result;
+  };
+
+  return global.breadbox.handleError;
+}
+
+// init is passed to the user and called with the app settings
+// to initialize the server
+function init() {
+  var settings = arguments[0] === undefined ? {} : arguments[0];
+
+  var urls = sortRoutes(settings.controllers, appRoutes);
+
+  settings.loginPage = settings.loginPage || '/login';
+  settings.logoutPage = settings.logoutPage || '/logout';
 
   http.createServer(function (req, res) {
 
-    var parentDir = path.join(__dirname, '../..').split('/').pop(),
+    var handleError = getErrorHandler(res),
 
-    // filepath is (eventually) the full path to the template
-    filepath = __dirname.replace(parentDir + '/breadbox/dist', ''),
+    // root directory of app
+    filepath = basePath,
 
     // parsedUrl contains all the parts of the URL
     parsedUrl = url.parse(req.url, true),
@@ -73,53 +197,31 @@ module.exports = function () {
     relPath = pathname === '/' ? '/index' : pathname,
 
     // routeName is the key we will use on the routes object to get the correct context
-    routeName = relPath.replace(/\/\//g, '/').replace(/\/$/, ''),
+    routeName = fixDoubleSlashes(relPath),
 
     // extension is the filetype, falls back to html
     extension = path.extname(pathname),
 
     // params is for URL parameters
     params = {},
-        controllers = settings.controllers,
-        authenticate = false,
-        mime = {
-      '.css': 'text/css; charset=UTF-8',
-      '.js': 'text/javascript; charset=UTF-8',
-      '.json': 'application/json; charset=UTF-8',
-      '.txt': 'text/plain; charset=UTF-8',
-      '.html': 'text/html; charset=UTF-8',
-      '.png': 'image/png',
-      '.gif': 'image/gif',
-      '.jpg': 'image/jpeg'
-    },
-        isView = extension === '' || extension === '.html',
-        cookies = {},
-        controller = undefined,
-        request = undefined;
 
-    settings.loginPage = settings.loginPage || '/login';
-    settings.logoutPage = settings.logoutPage || '/logout';
+    // user-defined routes
+    controllers = settings.controllers,
 
-    function error(message, data, status) {
+    // for keeping track of whether the current request must be authenticated
+    authenticate = false,
 
-      console.error(message + '<br><br>' + data);
+    // for keeping track of whether this request is for a view
+    isView = extension === '' || extension === '.html',
 
-      status = status || 404;
+    // container for cookies
+    cookies = {},
 
-      var errorData = {
-        status: status,
-        message: message + '<br><br>' + data
-      };
+    // the controller we should use for this request
+    controller = undefined,
 
-      render(__dirname.replace('/dist', '/views/error.html'), errorData, appRoutes['/error']).then(function (response) {
-
-        res.writeHead(status, {
-          'Content-Type': 'text/html'
-        });
-
-        res.end(response);
-      });
-    }
+    // the request object we will make available to controllers
+    request = undefined;
 
     // parseVars takes a requested route and an array of pre-interpolated
     // variables in that route and populates the params object.
@@ -148,13 +250,13 @@ module.exports = function () {
       return false;
     }
 
-    if (isView && staticUrls.indexOf(relPath) === -1) {
+    if (isView && urls['static'].indexOf(relPath) === -1) {
 
-      for (var i = 0; i < variableUrls.length; i++) {
+      for (var i = 0; i < urls.variable.length; i++) {
 
-        var keys = variableUrls[i].match(varRegx);
+        var keys = urls.variable[i].match(varRegx);
 
-        if (keys && parseVars(variableUrls[i], keys)) {
+        if (keys && parseVars(urls.variable[i], keys)) {
           break;
         }
       }
@@ -219,7 +321,7 @@ module.exports = function () {
           filepath = filepath.replace('/views', '/' + parentDir + '/breadbox/views');
           controller = appRoutes[routeName];
           if (typeof controller === 'undefined') {
-            error('Controller not found:', routeName);
+            handleError('Controller not found: ' + routeName, 404);
           }
         }
       }
@@ -265,13 +367,12 @@ module.exports = function () {
         if (req.method.toLowerCase() === 'post') {
 
           new formidable.IncomingForm().parse(req, function (err, fields, files) {
-            if (err) {
-              error('Post body couldn\'t be parsed.', err);
-            } else {
+
+            handleError(err).then(function () {
               request.body = fields;
               request.files = files;
               getTemplate();
-            }
+            });
           });
 
           // If this is not a post request,
@@ -292,25 +393,27 @@ module.exports = function () {
 
           fs.readFile(filepath, function (err, file) {
 
-            if (err) {
-
-              error('Asset couldn\'t be read.', err, 500);
-            } else {
+            handleError(err).then(function () {
 
               res.writeHead(200, {
                 'Content-Type': mime[extension]
               });
 
               res.end(file);
-            }
+            });
           });
         } else {
 
-          error('Asset not found:', filepath);
+          handleError('Asset not found: ' + filepath, 404);
         }
       });
     }
   }).listen(settings.port || 1337);
 
   console.log('Server running at http://localhost:' + (settings.port || 1337));
+}
+
+module.exports = {
+  init: init,
+  db: db
 };

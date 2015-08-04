@@ -1,7 +1,7 @@
 'use strict';
 
 var read = require('fs').readFile,
-    run = require('vm').runInNewContext,
+    vm = require('vm'),
     promise = require('./promise'),
     htmlEscape = require('./htmlEscape'),
     appRoutes = require('./routes'),
@@ -12,6 +12,12 @@ var read = require('fs').readFile,
     ifBlock = /{{\s*?if\s*?([\s\S]*?)\s*?}}/i,
     endif = /{{\s*?endif\s*?}}/i,
     response = undefined;
+
+function run(expression, context) {
+    return vm.runInNewContext(expression, context, {
+        timeout: 1000
+    });
+}
 
 function error(description, info) {
 

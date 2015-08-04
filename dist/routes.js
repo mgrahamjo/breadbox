@@ -158,8 +158,9 @@ module.exports = {
 
         var context = { className: 'admin' };
 
+        // If this is a post request, then let's try to log in.
         if (request.body) {
-
+            // The page we want to redirect to after a successful login
             context.from = request.body.from;
 
             try {
@@ -169,40 +170,50 @@ module.exports = {
                         pass = request.body.password;
 
                     db.get('users').then(function (users) {
-
+                        // If this user exists,
                         if (users[user]) {
-
+                            // See if the password is correct.
                             bcrypt.compare(pass, users[user].password, function (err, success) {
-
+                                // If the password is correct,
                                 if (success) {
-
+                                    // Generate a random token to identify this session.
                                     require('crypto').randomBytes(16, function (err, buffer) {
-
+                                        // out of entropy
                                         if (err) {
                                             throw err;
                                         }
 
                                         var id = buffer.toString('hex');
 
-                                        request.session.save(id, {
-                                            name: user,
-                                            role: users[user].role
-                                        });
+                                        // They say it's close enough to impossible that crypto would
+                                        // return the same random 16 byte token for two different sessions.
+                                        // But the fact that there's even an astronomical possibility still
+                                        // bugs me, so I'm going to make sure this id isn't in use anyway.
+                                        if (!request.session.get(id)) {
 
-                                        request.redirect(302, {
-                                            'Set-Cookie': 'id=' + id,
-                                            'Content-Type': 'text/html; charset=UTF-8',
-                                            'Location': request.body.from
-                                        });
+                                            request.session.save(id, {
+                                                name: user,
+                                                role: users[user].role
+                                            });
+
+                                            request.redirect(302, {
+                                                'Set-Cookie': 'id=' + id,
+                                                'Content-Type': 'text/html; charset=UTF-8',
+                                                'Location': context.from
+                                            });
+                                        }
                                     });
+                                    // Incorrect password
                                 } else {
                                     context.failed = true;
                                 }
                             });
+                            // User does not exist
                         } else {
                             context.failed = true;
                         }
                     });
+                    // Something went wrong.
                 })();
             } catch (err) {
 
@@ -210,6 +221,7 @@ module.exports = {
 
                 context.failed = true;
             }
+            // This is not a post request
         } else {
 
             context.from = request.query.from || '/admin';

@@ -26,7 +26,8 @@ module.exports = function(grunt) {
           'dist/promise.js': 'lib/promise.js',
           'dist/render.js': 'lib/render.js',
           'dist/session.js': 'lib/session.js',
-          'dist/routes.js': 'routes.js'
+          'dist/routes.js': 'routes.js',
+          'dist/crash.js': 'lib/crash.js'
         }
       }
     },

@@ -1,10 +1,11 @@
 'use strict';
 
-var fs = require('fs'),
+var promise = require('./promise'),
+    fs = require('fs'),
     vm = require('vm'),
-    promise = require('./promise'),
     htmlEscape = require('./htmlEscape'),
     path = require('path'),
+    crash = require('./crash'),
     parentDir = path.join(__dirname, '../..').split('/').pop(),
     modelPath = __dirname.replace(parentDir + '/breadbox/dist', 'models/');
 
@@ -25,11 +26,10 @@ function save(path, data, response) {
     escape(data);
 
     fs.writeFile(modelPath + path + '.json', JSON.stringify(data), function (err) {
-        if (err) {
-            throw err;
-        } else {
+
+        crash.handle(err).then(function () {
             response.resolve(data);
-        }
+        });
     });
 }
 
@@ -47,16 +47,17 @@ function get(path, internal) {
 
             fs.readFile(path, { encoding: 'utf8' }, function (err, data) {
 
-                if (err) {
-                    throw err;
-                }
+                if (data) {
 
-                try {
+                    crash.handle(err).then(function () {
 
-                    response.resolve(JSON.parse(data));
-                } catch (err) {
+                        crash.attempt(function () {
+                            response.resolve(JSON.parse(data));
+                        });
+                    });
+                } else {
 
-                    throw err;
+                    response.resolve(undefined);
                 }
             });
         } else {
@@ -111,11 +112,11 @@ function drop(path, key) {
 
     console.log(key ? 'DB: drop ' + path + '; key ' + key : 'DB: drop all - ' + path);
 
-    if (key) {
+    fs.exists(modelPath + path + '.json', function (exists) {
 
-        fs.exists(modelPath + path + '.json', function (exists) {
+        if (exists) {
 
-            if (exists) {
+            if (key) {
 
                 get(path, true).then(function (data) {
 
@@ -125,15 +126,19 @@ function drop(path, key) {
 
                     save(path, data, response);
                 });
+            } else {
+
+                fs.unlink(modelPath + path + '.json', function (err) {
+
+                    crash.handle(err).then(function () {
+                        response.resolve(err);
+                    });
+                });
             }
-        });
-    } else {
-
-        fs.unlink(modelPath + path + '.json', function (err) {
-
-            response.resolve(err);
-        });
-    }
+        } else {
+            response.resolve();
+        }
+    });
 
     return response;
 }

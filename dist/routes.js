@@ -4,6 +4,7 @@ var db = require('./db'),
     fs = require('fs'),
     bcrypt = require('bcrypt-nodejs'),
     path = require('path'),
+    crash = require('./crash'),
     thisDir = path.join(__dirname, '..'),
     parentDir = path.join(__dirname, '../../..');
 
@@ -42,7 +43,7 @@ module.exports = {
 
         if (request.body) {
 
-            try {
+            crash.attempt(function () {
 
                 context.json = JSON.parse(request.body.json);
 
@@ -54,7 +55,7 @@ module.exports = {
 
                     response.resolve(context, thisDir + '/views/collection.html');
                 });
-            } catch (err) {
+            }, function (err) {
 
                 console.error(err);
 
@@ -66,7 +67,7 @@ module.exports = {
 
                     response.resolve(context, thisDir + '/views/collection.html');
                 });
-            }
+            });
         } else {
 
             db.get(request.params.collection).then(function (data) {
@@ -111,9 +112,10 @@ module.exports = {
 
         if (request.body) {
 
-            try {
+            crash.attempt(function () {
 
                 bcrypt.genSalt(10, function (err, salt) {
+
                     bcrypt.hash(request.body.password, salt, null, function (err, passHash) {
 
                         var user = {
@@ -129,14 +131,14 @@ module.exports = {
                         });
                     });
                 });
-            } catch (err) {
+            }, function (err) {
 
                 console.error(err);
 
                 context.error = 'Save failed.';
 
                 response.resolve(context, thisDir + '/views/newuser.html');
-            }
+            });
         } else {
 
             response.resolve(context, thisDir + '/views/newuser.html');
@@ -163,64 +165,62 @@ module.exports = {
             // The page we want to redirect to after a successful login
             context.from = request.body.from;
 
-            try {
-                (function () {
+            crash.attempt(function () {
 
-                    var user = request.body.username,
-                        pass = request.body.password;
+                var user = request.body.username,
+                    pass = request.body.password;
 
-                    db.get('users').then(function (users) {
-                        // If this user exists,
-                        if (users[user]) {
-                            // See if the password is correct.
-                            bcrypt.compare(pass, users[user].password, function (err, success) {
-                                // If the password is correct,
-                                if (success) {
-                                    // Generate a random token to identify this session.
-                                    require('crypto').randomBytes(16, function (err, buffer) {
-                                        // out of entropy
-                                        if (err) {
-                                            throw err;
-                                        }
+                db.get('users').then(function (users) {
+                    // If this user exists,
+                    if (users[user]) {
+                        // See if the password is correct.
+                        bcrypt.compare(pass, users[user].password, function (err, success) {
+                            // If the password is correct,
+                            if (success) {
+                                // Generate a random token to identify this session.
+                                require('crypto').randomBytes(16, function (err, buffer) {
+                                    // out of entropy
+                                    if (err) {
+                                        throw err;
+                                    }
 
-                                        var id = buffer.toString('hex');
+                                    var id = buffer.toString('hex');
 
-                                        // They say it's close enough to impossible that crypto would
-                                        // return the same random 16 byte token for two different sessions.
-                                        // But the fact that there's even an astronomical possibility still
-                                        // bugs me, so I'm going to make sure this id isn't in use anyway.
-                                        if (!request.session.get(id)) {
+                                    // They say it's close enough to impossible that crypto would
+                                    // return the same random 16 byte token for two different sessions.
+                                    // But the fact that there's even an astronomical possibility still
+                                    // bugs me, so I'm going to make sure this id isn't in use anyway.
+                                    if (!request.session.get(id)) {
 
-                                            request.session.save(id, {
-                                                name: user,
-                                                role: users[user].role
-                                            });
+                                        request.session.save(id, {
+                                            name: user,
+                                            role: users[user].role
+                                        });
 
-                                            request.redirect(302, {
-                                                'Set-Cookie': 'id=' + id,
-                                                'Content-Type': 'text/html; charset=UTF-8',
-                                                'Location': context.from
-                                            });
-                                        }
-                                    });
-                                    // Incorrect password
-                                } else {
-                                    context.failed = true;
-                                }
-                            });
-                            // User does not exist
-                        } else {
-                            context.failed = true;
-                        }
-                    });
-                    // Something went wrong.
-                })();
-            } catch (err) {
+                                        request.redirect(302, {
+                                            'Set-Cookie': 'id=' + id,
+                                            'Content-Type': 'text/html; charset=UTF-8',
+                                            'Location': context.from
+                                        });
+                                    }
+                                });
+                                // Incorrect password
+                            } else {
+                                context.failed = true;
+                            }
+                        });
+                        // User does not exist
+                    } else {
+                        context.failed = true;
+                    }
+                });
+                // Something went wrong.
+            }, function (err) {
 
                 console.error(err);
 
                 context.failed = true;
-            }
+            });
             // This is not a post request
         } else {
 

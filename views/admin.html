@@ -41,9 +41,11 @@
 	    }
     });
 
+	{{if userRole === 'admin'}}
     $('#new-user').addEventListener('click', function() {
         location.href = '/admin/new-user';
     });
+    {{endif}}
 
     $('.delete').forEach(function(el) {
     	el.addEventListener('click', function(e) {

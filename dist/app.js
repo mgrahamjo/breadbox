@@ -1,8 +1,5 @@
 'use strict';
 
-// Global namespace
-global.breadbox = {};
-
 var
 // For creating server
 http = require('http'),
@@ -10,23 +7,23 @@ http = require('http'),
 // Filesystem IO
 fs = require('fs'),
 
+// JSON db
+db = require('./db'),
+
 // For parsing URLs
 url = require('url'),
 
 // For other kinds of url parsing
 path = require('path'),
 
-// JSON database
-db = require('./db'),
-
 // Our function that returns an interpolated template
 render = require('./render'),
 
+// Our promise implementation
+promise = require('./promise'),
+
 // Session management
 session = require('./session'),
-
-// Our implementation of promise objects
-promise = require('./promise'),
 
 // Out-of-the-box controllers
 appRoutes = require('./routes'),
@@ -53,13 +50,17 @@ mime = {
   '.png': 'image/png',
   '.gif': 'image/gif',
   '.jpg': 'image/jpeg'
-};
+},
+
+// Awesome error interceptor
+crash = require('./crash');
 
 // Before crashing, save current sessions.
 process.on('uncaughtException', function (err) {
-  db.put('session-dump', session.get()).then(function () {
-    throw err;
-  });
+  throw err;
+  // fs.writeFile(basePath +'models/session-dump.json', JSON.stringify(session.get()), () => {
+  //   throw err;
+  // });
 });
 
 // Before interrupting the server manually, save current sessions.
@@ -130,46 +131,6 @@ function sortRoutes() {
   };
 }
 
-// initialize error handler, which needs access to the response object
-function getErrorHandler(res) {
-
-  global.breadbox.handleError = function (err, status, die) {
-
-    var result = promise();
-
-    if (err) {
-
-      console.error(err);
-
-      status = status || 500;
-
-      var errorData = {
-        status: status,
-        message: err
-      };
-
-      if (!die) {
-
-        render(__dirname.replace('/dist', '/views/error.html'), errorData, appRoutes['/error']).then(function (response) {
-
-          res.writeHead(status, {
-            'Content-Type': 'text/html'
-          });
-
-          res.end(response);
-        });
-      }
-    } else {
-
-      result.resolve();
-    }
-
-    return result;
-  };
-
-  return global.breadbox.handleError;
-}
-
 // init is passed to the user and called with the app settings
 // to initialize the server
 function init() {
@@ -182,8 +143,9 @@ function init() {
 
   http.createServer(function (req, res) {
 
-    var handleError = getErrorHandler(res),
+    global.res = res;
 
+    var
     // root directory of app
     filepath = basePath,
 
@@ -250,12 +212,13 @@ function init() {
       return false;
     }
 
+    // If this is a template and it isn't a static URL...
     if (isView && urls['static'].indexOf(relPath) === -1) {
-
+      // ...loop through the variable URLs,
       for (var i = 0; i < urls.variable.length; i++) {
-
+        // get the param names,
         var keys = urls.variable[i].match(varRegx);
-
+        // and look see if any variable routes match
         if (keys && parseVars(urls.variable[i], keys)) {
           break;
         }
@@ -293,7 +256,7 @@ function init() {
     // and sends the result to the client.
     function getTemplate() {
 
-      render(filepath, request, controller).then(function (response) {
+      render(filepath, request, controller).then(function (template) {
         var headers = arguments[1] === undefined ? {} : arguments[1];
 
         var status = headers.status;
@@ -304,7 +267,7 @@ function init() {
 
         res.writeHead(status || 200, headers);
 
-        res.end(response);
+        res.end(template);
       });
     }
 
@@ -321,7 +284,7 @@ function init() {
           filepath = filepath.replace('/views', '/' + parentDir + '/breadbox/views');
           controller = appRoutes[routeName];
           if (typeof controller === 'undefined') {
-            handleError('Controller not found: ' + routeName, 404);
+            crash.handle('Controller not found: ' + routeName, 404);
           }
         }
       }
@@ -362,13 +325,13 @@ function init() {
 
         console.log('Request: ' + filepath);
 
-        // If this is a post request, we'll let formidable handle
+        // If this is a post request, we'll let formidable crash.handle
         // the buffer stream and add the post data to the request object.
         if (req.method.toLowerCase() === 'post') {
 
           new formidable.IncomingForm().parse(req, function (err, fields, files) {
 
-            handleError(err).then(function () {
+            crash.handle(err).then(function () {
               request.body = fields;
               request.files = files;
               getTemplate();
@@ -393,7 +356,7 @@ function init() {
 
           fs.readFile(filepath, function (err, file) {
 
-            handleError(err).then(function () {
+            crash.handle(err).then(function () {
 
               res.writeHead(200, {
                 'Content-Type': mime[extension]
@@ -404,7 +367,7 @@ function init() {
           });
         } else {
 
-          handleError('Asset not found: ' + filepath, 404);
+          crash.handle('Asset not found: ' + filepath, 404);
         }
       });
     }
@@ -415,5 +378,8 @@ function init() {
 
 module.exports = {
   init: init,
-  db: db
+  db: db,
+  promise: promise,
+  handle: crash.handle,
+  attempt: crash.attempt
 };

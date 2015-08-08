@@ -48,11 +48,10 @@
         $('input').forEach(function(input) {
             if (!input.value) {
                 valid = false;
-                return false;
             }
         });
 
-        if ($('[type="password"]').value !== $('[type="password"]')[1].value) {
+        if ($('[type="password"]')[0].value !== $('[type="password"]')[1].value) {
             valid = false;
         }
 

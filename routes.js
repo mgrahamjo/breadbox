@@ -4,6 +4,7 @@ const db = require('./db'),
     fs = require('fs'),
     bcrypt = require('bcrypt-nodejs'),
     path = require('path'),
+    crash = require('./crash'),
     thisDir = path.join(__dirname, '..'),
     parentDir = path.join(__dirname, '../../..');
 
@@ -42,7 +43,7 @@ module.exports = {
 
         if (request.body) {
 
-            try {
+            crash.attempt(() => {
 
                 context.json = JSON.parse(request.body.json);
 
@@ -55,7 +56,7 @@ module.exports = {
                     response.resolve(context, thisDir + '/views/collection.html');
                 });
 
-            } catch(err) {
+            }, (err) => {
 
                 console.error(err);
 
@@ -67,7 +68,7 @@ module.exports = {
 
                     response.resolve(context, thisDir + '/views/collection.html');
                 });
-            }
+            });
 
         } else {
 
@@ -114,9 +115,10 @@ module.exports = {
 
         if (request.body) {
 
-            try {
+            crash.attempt(() => {
 
                 bcrypt.genSalt(10, (err, salt) => {
+
                     bcrypt.hash(request.body.password, salt, null, (err, passHash) => {
                         
                         let user = {
@@ -133,14 +135,14 @@ module.exports = {
                     });
                 });
 
-            } catch(err) {
+            }, (err) => {
 
                 console.error(err);
 
                 context.error = 'Save failed.';
 
                 response.resolve(context, thisDir + '/views/newuser.html');
-            }
+            });
 
         } else {
 
@@ -168,7 +170,7 @@ module.exports = {
             // The page we want to redirect to after a successful login
             context.from = request.body.from;
 
-            try {
+            crash.attempt(() => {
 
                 let user = request.body.username,
                     pass = request.body.password;
@@ -216,12 +218,12 @@ module.exports = {
                     }
                 });
             // Something went wrong.
-            } catch(err) {
+            }, (err) => {
 
                 console.error(err);
 
                 context.failed = true;
-            }
+            });
         // This is not a post request
         } else {
 

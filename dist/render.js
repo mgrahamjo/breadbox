@@ -3,37 +3,19 @@
 var read = require('fs').readFile,
     vm = require('vm'),
     promise = require('./promise'),
+    crash = require('./crash'),
     htmlEscape = require('./htmlEscape'),
-    appRoutes = require('./routes'),
     includeRegx = /{{\s*?include\s(\S*?)s*?}}/i,
     varRegx = /{{([\s\S]*?)}}/,
     forIn = /{{\s*?for\s*?\S*?\s*?in\s*?\S*?\s*?}}/i,
     endfor = /{{\s*?endfor\s*?}}/i,
     ifBlock = /{{\s*?if\s*?([\s\S]*?)\s*?}}/i,
     endif = /{{\s*?endif\s*?}}/i,
-    response = undefined;
+    basePath = require('path').join(__dirname, '../../../');
 
 function run(expression, context) {
     return vm.runInNewContext(expression, context, {
         timeout: 1000
-    });
-}
-
-function error(description, info) {
-
-    console.error(description + '. ' + info);
-
-    var errorData = {
-        status: 500,
-        message: description + '<br><br>' + info
-    };
-
-    getContext(errorData, appRoutes['/error']).then(function (context) {
-
-        read(__dirname.replace('/dist', '/views/error.html'), { encoding: 'utf8' }, function (err, template) {
-
-            response.resolve(parse(template, context), { status: errorData.status });
-        });
     });
 }
 
@@ -71,26 +53,39 @@ function parseVars(template, context, match) {
 function parseLoops(template, context, match) {
 
     var raw = match[0],
-        key = match[1],
+        index = match[1],
         arrName = match[2],
         html = match[3],
-        array = [],
+        list = [],
         output = '',
-        initKeyValue = context[key];
+
+    //initKeyValue = context[index],
+    key = undefined;
 
     try {
-        array = run(arrName, context);
+        list = run(arrName, context);
     } catch (err) {
         // array is undefined
         console.error(err);
     }
 
-    array.forEach(function (value) {
-        context[key] = value;
+    if (index.indexOf('.') > -1) {
+        var keys = index.split('.');
+        index = keys[0];
+        key = keys[1];
+    }
+
+    Object.keys(list).forEach(function (value) {
+        if (key) {
+            context[index] = value;
+            context[key] = list[value];
+        } else {
+            context[index] = list[value];
+        }
         output += parse(html, context);
     });
 
-    context[key] = initKeyValue;
+    //context[key] = initKeyValue;
 
     return parse(template.replace(raw, output), context);
 }
@@ -98,38 +93,41 @@ function parseLoops(template, context, match) {
 function parseIfs(template, context, match) {
 
     var raw = match[0],
-        value = match[1],
+        expression = match[1],
         html = match[2],
         doShow = undefined;
 
     try {
-        doShow = run(value, context);
-    } catch (err) {}
+        doShow = run(expression, context);
+    } catch (err) {
+        console.error(err);
+    }
 
     return parse(doShow ? template.replace(raw, html) : template.replace(raw, ''), context);
 }
 
 // Recursively asyncronously parses partial includes
 // then calls the callback with the result
-function parseIncludes(template, callback) {
+function parseIncludes(template, admin, callback) {
 
     var match = includeRegx.exec(template),
         raw = undefined,
-        path = undefined;
+        path = undefined,
+        viewPath = undefined;
 
     if (match !== null) {
 
         raw = match[0];
         path = match[1];
 
-        read(__dirname + '/../views/' + path + '.html', { encoding: 'utf8' }, function (err, html) {
+        viewPath = admin ? __dirname + '/../views/' : basePath + '/views/';
 
-            if (err) {
-                error('error at read(...) in the parseIncludes function of render.js.', err);
-            } else {
+        read(viewPath + path + '.html', { encoding: 'utf8' }, function (err, html) {
 
-                parseIncludes(template.replace(raw, html), callback);
-            }
+            crash.handle(err).then(function () {
+
+                parseIncludes(template.replace(raw, html), admin, callback);
+            });
         });
     } else {
         callback(template);
@@ -239,7 +237,7 @@ function getContext(request, controller) {
 
 function render(filepath, request, controller) {
 
-    response = promise();
+    var response = promise();
 
     getContext(request, controller).then(function (context, customPath, headers) {
 
@@ -250,14 +248,17 @@ function render(filepath, request, controller) {
         // get template. read = fs.readFile
         read(filepath, { encoding: 'utf8' }, function (err, template) {
 
-            if (err) {
-                error('error at read(...) in the render function of render.js.', err);
-            } else {
+            crash.handle(err).then(function () {
 
+                var admin = false;
+                // Figure out whether this is a breadbox view or a custom view.
+                if (filepath.indexOf(basePath + 'views/') === -1) {
+                    admin = true;
+                }
                 // Now that we have everything we need, we can interpolate
                 // the template and put together the response.
                 // First, lets get any included partials so we have the full template.
-                parseIncludes(template, function (fullTemplate) {
+                parseIncludes(template, admin, function (fullTemplate) {
 
                     var parsed = parse(fullTemplate, context);
 
@@ -265,7 +266,7 @@ function render(filepath, request, controller) {
                         response.resolve(parsed, headers);
                     }
                 });
-            }
+            });
         });
     });
 
@@ -273,5 +274,3 @@ function render(filepath, request, controller) {
 }
 
 module.exports = render;
-
-// An error here simply means value is falsy.

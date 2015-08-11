@@ -2,6 +2,7 @@
 
 var read = require('fs').readFile,
     vm = require('vm'),
+    path = require('path'),
     promise = require('./promise'),
     crash = require('./crash'),
     htmlEscape = require('./htmlEscape'),
@@ -11,7 +12,7 @@ var read = require('fs').readFile,
     endfor = /{{\s*?endfor\s*?}}/i,
     ifBlock = /{{\s*?if\s*?([\s\S]*?)\s*?}}/i,
     endif = /{{\s*?endif\s*?}}/i,
-    basePath = require('path').join(__dirname, '../../../');
+    basePath = path.join(__dirname, '../../../');
 
 function run(expression, context) {
     return vm.runInNewContext(expression, context, {
@@ -41,8 +42,6 @@ function parseVars(template, context, match) {
             value = htmlEscape(value);
         }
     } catch (err) {
-
-        console.error(err);
 
         value = '';
     }
@@ -242,6 +241,11 @@ function render(filepath, request, controller) {
     getContext(request, controller).then(function (context, customPath, headers) {
 
         if (customPath) {
+            if (customPath.indexOf('views/') === 0 || customPath.indexOf('/views/') === 0) {
+                customPath = path.normalize(basePath + '/' + customPath);
+            } else if (customPath.indexOf(basePath) !== 0) {
+                customPath = path.normalize(basePath + 'views/' + customPath);
+            }
             filepath = customPath;
         }
 

@@ -57,12 +57,12 @@ function get(path, internal) {
                     });
                 } else {
 
-                    response.resolve(undefined);
+                    response.resolve({});
                 }
             });
         } else {
 
-            response.resolve(undefined);
+            response.resolve({});
         }
     });
 

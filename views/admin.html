@@ -17,12 +17,12 @@
 </div>
 
 {{for collection in collections}}
-	
+	{{if !(userRole !== 'admin' && collection === 'users') }}
 	<div class="collection clear">
 		<a class="btn" href="/admin/{{collection}}">{{collection}}</a>
 		<span class="btn delete right" data-collection="{{collection}}">Delete</span>
 	</div>
-
+	{{endif}}
 {{endfor}}
 
 <script>

@@ -57,10 +57,9 @@ crash = require('./crash');
 
 // Before crashing, save current sessions.
 process.on('uncaughtException', function (err) {
-  throw err;
-  // fs.writeFile(basePath +'models/session-dump.json', JSON.stringify(session.get()), () => {
-  //   throw err;
-  // });
+  fs.writeFile(basePath + 'models/session-dump.json', JSON.stringify(session.get()), function () {
+    throw err;
+  });
 });
 
 // Before interrupting the server manually, save current sessions.
@@ -78,7 +77,7 @@ db.get('session-dump').then(function (data) {
 
 // Utility function for removing extra slashes in route strings.
 function fixDoubleSlashes(route) {
-  return route.replace(/\/\//g, '/').replace(/\/$/, '');
+  return path.normalize(route).replace(/\/$/, '');
 }
 
 // sortRoutes accepts any number of controller objects
@@ -131,15 +130,20 @@ function sortRoutes() {
   };
 }
 
+function redirect(status, headers) {
+  global.res.writeHead(status, headers);
+  global.res.end();
+}
+
 // init is passed to the user and called with the app settings
 // to initialize the server
 function init() {
   var settings = arguments[0] === undefined ? {} : arguments[0];
 
-  var urls = sortRoutes(settings.controllers, appRoutes);
-
   settings.loginPage = settings.loginPage || '/login';
   settings.logoutPage = settings.logoutPage || '/logout';
+
+  var urls = sortRoutes(settings.controllers, appRoutes);
 
   http.createServer(function (req, res) {
 
@@ -159,7 +163,7 @@ function init() {
     relPath = pathname === '/' ? '/index' : pathname,
 
     // routeName is the key we will use on the routes object to get the correct context
-    routeName = fixDoubleSlashes(relPath),
+    routeName = relPath,
 
     // extension is the filetype, falls back to html
     extension = path.extname(pathname),
@@ -184,6 +188,34 @@ function init() {
 
     // the request object we will make available to controllers
     request = undefined;
+
+    function login() {
+      res.writeHead(302, {
+        'Location': settings.loginPage + '?from=' + pathname
+      });
+      res.end();
+    }
+
+    // getTemplate passes the name of the route we want,
+    // the path to the default template for this route,
+    // and the request object to our rendering function,
+    // and sends the result to the client.
+    function getTemplate(filepath, request, controller) {
+
+      render(filepath, request, controller).then(function (template) {
+        var headers = arguments[1] === undefined ? {} : arguments[1];
+
+        var status = headers.status;
+
+        delete headers.status;
+
+        headers['Content-Type'] = headers['Content-Type'] || mime[extension];
+
+        res.writeHead(status || 200, headers);
+
+        res.end(template);
+      });
+    }
 
     // parseVars takes a requested route and an array of pre-interpolated
     // variables in that route and populates the params object.
@@ -236,39 +268,6 @@ function init() {
       filepath += 'views' + relPath;
     } else {
       filepath += relPath;
-    }
-
-    function login() {
-      res.writeHead(302, {
-        'Location': settings.loginPage + '?from=' + pathname
-      });
-      res.end();
-    }
-
-    function redirect(status, headers) {
-      res.writeHead(status, headers);
-      res.end();
-    }
-
-    // getTemplate passes the name of the route we want,
-    // the path to the default template for this route,
-    // and the request object to our rendering function,
-    // and sends the result to the client.
-    function getTemplate() {
-
-      render(filepath, request, controller).then(function (template) {
-        var headers = arguments[1] === undefined ? {} : arguments[1];
-
-        var status = headers.status;
-
-        delete headers.status;
-
-        headers['Content-Type'] = headers['Content-Type'] || mime[extension];
-
-        res.writeHead(status || 200, headers);
-
-        res.end(template);
-      });
     }
 
     filepath = fixDoubleSlashes(filepath);
@@ -334,14 +333,14 @@ function init() {
             crash.handle(err).then(function () {
               request.body = fields;
               request.files = files;
-              getTemplate();
+              getTemplate(filepath, request, controller);
             });
           });
 
           // If this is not a post request,
           // leave the request object as-is and render the template.
         } else {
-          getTemplate();
+          getTemplate(filepath, request, controller);
         }
       }
 

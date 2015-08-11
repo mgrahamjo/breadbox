@@ -9,7 +9,7 @@ A Node JS MVC framework that priortizes simplicity. Currently in development.
 
 var breadbox = require('breadbox');
 
-breadbox({
+breadbox.init({
     controllers: {
         '/index': function(response) {
             response.resolve({ person: "World" });
@@ -28,7 +28,7 @@ Run `node index.js` then open http://localhost:1337 in your browser.
 
 ## Options
 
-The breadbox function accepts a configuration object with a few optional properties:
+The breadbox.init method accepts a configuration object with a few optional properties:
 * `controllers`: an object on which keys are route paths and values are functions. More details below.
 * `loginPage`: the relative URL of the page where users can log in. Defaults to '/login'.
 * `logoutPage`: the relative URL of the page that logs users out. Defaults to '/logout'.
@@ -36,7 +36,7 @@ The breadbox function accepts a configuration object with a few optional propert
 
 ## Templates
 
-Templates go in the `views/` folder.
+Put your templates in a folder called `views` in your project's root directory.
 
 ### Includes
 
@@ -48,15 +48,19 @@ Templates go in the `views/` folder.
 
 `{{for <key> in <array>}}...{{endfor}}` renders the contained content once for each item in the given array. Within that content, `{{<key>}}` will be replaced with the corresponding value in the array.
 
+`{{for <key>.<value> in <object>}}...{{endfor}}` allows you to loop over an object. Within the loop, `{{<key>}}` will refer to the current key (index if object is an array), and `<{{<value>}}` will be the value for that key.
+
 ### If Blocks
 
-`{{if <variable>}}...{{endif}}` renders the contained content only if the given variable is evaluated as truthy.
+`{{if <variable> || <expression>}}...{{endif}}` renders the contained content only if the given expression is evaluated as truthy. Note that expressions which throw errors will always be falsy. This means that if `variable` has not been defined, `{{if !variable}}` will evaluate as falsy after throwing a reference error.
 
 ### Variables
 
-`{{<variable> || <expression>}}` will be replaced with the result of evaluating the given expression or variable using the context provided by the controller.
+`{{<variable> || <expression>}}` will be replaced with the result of evaluating the given expression or variable using the context provided by the controller. 
 
 Variables are automatically HTML escaped. To bypass this security measure, use `{{<variable> | safe }}`.
+
+As with if blocks, expressions which throw errors will always evaluate as falsy.
 
 ## Controllers
 

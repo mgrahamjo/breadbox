@@ -8,29 +8,35 @@ var tokens = {};
 
 module.exports = {
 
-	makeToken: function makeToken(session) {
+	makeToken: function makeToken(request) {
 
 		var response = promise();
 
-		crypto.randomBytes(32, function (err, rand) {
+		if (request.session && request.session.token) {
 
-			crash.handle(err).then(function () {
+			response.resolve(request.cookies.id, request.session.token);
+		} else {
 
-				rand = rand.toString('hex');
+			crypto.randomBytes(32, function (err, rand) {
 
-				var mid = Math.floor(rand.length / 2),
-				    id = rand.substring(0, mid),
-				    token = rand.substring(mid);
+				crash.handle(err).then(function () {
 
-				tokens[id] = token;
+					rand = rand.toString('hex');
 
-				session.save(id, {
-					token: token
+					var mid = Math.floor(rand.length / 2),
+					    id = rand.substring(0, mid),
+					    token = rand.substring(mid);
+
+					tokens[id] = token;
+
+					request.session.save(id, {
+						token: token
+					});
+
+					response.resolve(id, token);
 				});
-
-				response.resolve(id, token);
 			});
-		});
+		}
 
 		return response;
 	}

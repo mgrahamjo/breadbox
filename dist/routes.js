@@ -215,7 +215,7 @@ module.exports = {
             // This is not a post request
         } else {
 
-            csrf.makeToken(request.session).then(function (id, token) {
+            csrf.makeToken(request).then(function (id, token) {
                 context.token = token;
                 response.resolve(context, undefined, {
                     'Set-Cookie': 'id=' + id

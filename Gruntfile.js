@@ -27,7 +27,8 @@ module.exports = function(grunt) {
           'dist/render.js': 'lib/render.js',
           'dist/session.js': 'lib/session.js',
           'dist/routes.js': 'routes.js',
-          'dist/crash.js': 'lib/crash.js'
+          'dist/crash.js': 'lib/crash.js',
+          'dist/csrf.js': 'lib/csrf.js'
         }
       }
     },

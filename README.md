@@ -52,7 +52,9 @@ Put your templates in a folder called `views` in your project's root directory.
 
 ### If Blocks
 
-`{{if <variable> || <expression>}}...{{endif}}` renders the contained content only if the given expression is evaluated as truthy. Note that expressions which throw errors will always be falsy. This means that if `variable` has not been defined, `{{if !variable}}` will evaluate as falsy after throwing a reference error.
+`{{if <variable> || <expression>}}...{{endif}}` renders the contained content only if the given expression is evaluated as truthy. 
+
+Note that expressions which throw errors will always be falsy. This means that if `variable` has not been defined, `{{if !variable}}` will evaluate as falsy after throwing a reference error.
 
 ### Variables
 
@@ -74,7 +76,7 @@ Controllers allow you to do a number things:
 
 ### Defining URLs
 
-The keys on the controllers object you pass to the breadbox function will be used to match requested URLs to your controller functions. The root URL, '/', is matched to the '/index' controller key. '.html' extensions are ignored. 
+The keys on the controllers object you pass to the breadbox.init method will be used to match requested URLs to your controller functions. The root URL, '/', is matched to the '/index' controller key. '.html' extensions are ignored. 
 
 ```
 var controllers = {

@@ -5,6 +5,7 @@ const db = require('./db'),
     bcrypt = require('bcrypt-nodejs'),
     path = require('path'),
     crash = require('./crash'),
+    csrf = require('./csrf'),
     thisDir = path.join(__dirname, '..'),
     parentDir = path.join(__dirname, '../../..');
 
@@ -163,12 +164,14 @@ module.exports = {
 
     '/login': function(response, request) {
 
-        let context = { className: 'admin' };
+        let context = {
+                className: 'admin',
+                from: request.query.from || '/admin',
+                failed: false
+            };
 
         // If this is a post request, then let's try to log in.
         if (request.body) {
-            // The page we want to redirect to after a successful login
-            context.from = request.body.from;
 
             crash.attempt(() => {
 
@@ -182,55 +185,48 @@ module.exports = {
                         bcrypt.compare(pass, users[user].password, (err, success) => {
                             // If the password is correct,
                             if (success) {
-                                // Generate a random token to identify this session.
-                                require('crypto').randomBytes(16, function(err, buffer) {
-                                    // out of entropy
-                                    if (err) { throw err; }
 
-                                    let id = buffer.toString('hex');
+                                request.session.save(request.cookies.id, {
+                                    name: user,
+                                    role: users[user].role,
+                                    token: request.session.get(request.cookies.id).token
+                                });
 
-                                    // They say it's close enough to impossible that crypto would
-                                    // return the same random 16 byte token for two different sessions.
-                                    // But the fact that there's even an astronomical possibility still
-                                    // bugs me, so I'm going to make sure this id isn't in use anyway.
-                                    if (!request.session.get(id)) {
-
-                                        request.session.save(id, {
-                                            name: user,
-                                            role: users[user].role
-                                        });
-                                    
-                                        request.redirect(302, {
-                                            'Set-Cookie': 'id=' + id,
-                                            'Content-Type': 'text/html; charset=UTF-8',
-                                            'Location': context.from
-                                        });
-                                    }
+                                request.redirect(302, {
+                                    'Content-Type': 'text/html; charset=UTF-8',
+                                    'Location': context.from
                                 });
                             // Incorrect password
                             } else {
                                 context.failed = true;
+                                response.resolve(context);
                             }
                         });
                     // User does not exist
                     } else {
                         context.failed = true;
+                        response.resolve(context);
                     }
                 });
             // Something went wrong.
-            }, (err) => {
+            }, err => {
 
                 console.error(err);
 
                 context.failed = true;
+
+                response.resolve(context);
             });
         // This is not a post request
         } else {
 
-            context.from = request.query.from || '/admin';
+           csrf.makeToken(request.session).then((id, token) => {
+                context.token = token;
+                response.resolve(context, undefined, {
+                    'Set-Cookie': 'id=' + id
+                });
+            });
         }
-        
-        response.resolve(context);
     }, 
 
     '/logout': function(response, request) {

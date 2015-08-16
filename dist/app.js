@@ -135,6 +135,10 @@ function redirect(status, headers) {
   global.res.end();
 }
 
+function isAuthenticated(session) {
+  return session && session.name;
+}
+
 // init is passed to the user and called with the app settings
 // to initialize the server
 function init() {
@@ -307,10 +311,10 @@ function init() {
         })();
       }
 
-      if (authenticate && pathname !== settings.loginPage && !session.get(cookies.id)) {
+      if (authenticate && pathname !== settings.loginPage && !isAuthenticated(session.get(cookies.id))) {
 
         login();
-      } else if (controller) {
+      } else {
 
         request = {
           data: req,
@@ -331,9 +335,19 @@ function init() {
           new formidable.IncomingForm().parse(req, function (err, fields, files) {
 
             crash.handle(err).then(function () {
-              request.body = fields;
-              request.files = files;
-              getTemplate(filepath, request, controller);
+
+              crash.attempt(function () {
+
+                var token = session.get(cookies.id).token;
+
+                if (token && cookies.id && fields.token === token) {
+                  request.body = fields;
+                  request.files = files;
+                  getTemplate(filepath, request, controller);
+                }
+              }, function () {
+                crash.handle('CSRF verfication failed.', 401);
+              });
             });
           });
 

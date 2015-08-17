@@ -36,14 +36,20 @@ function parseVars(template, context, match) {
         filters[i] = filter.replace(/\s/g, '');
     });
 
-    try {
-        value = run(ref, context);
-        if (typeof value === 'string' && filters.indexOf('safe') === -1) {
-            value = htmlEscape(value);
-        }
-    } catch (err) {
+    if (filters.indexOf('skip') !== -1) {
 
-        value = '';
+        value = '&lcub;&lcub;' + ref + '&rcub;&rcub;';
+    } else {
+
+        try {
+            value = run(ref, context);
+            if (typeof value === 'string' && filters.indexOf('safe') === -1) {
+                value = htmlEscape(value);
+            }
+        } catch (err) {
+
+            value = '';
+        }
     }
 
     return parse(template.replace(raw, value), context);

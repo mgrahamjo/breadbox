@@ -39,7 +39,8 @@ module.exports = {
 
         let context = {
             collection: request.params.collection,
-            className: 'admin'
+            className: 'admin',
+            token: request.session.get(request.cookies.id).token
         };
 
         if (request.body) {

@@ -39,7 +39,7 @@ function get(path, internal) {
 
     var response = promise();
 
-    path = modelPath + path + '.json';
+    path = modelPath + path.replace(/\.json$/, '') + '.json';
 
     fs.exists(path, function (exists) {
 
@@ -75,6 +75,8 @@ function put(path, value, key) {
 
     var response = promise();
 
+    path = path.replace(/\.json$/, '');
+
     console.log(key ? 'DB: put ' + value + ' in ' + path + ' at key ' + key : 'DB: put ' + value + ' in ' + path);
 
     if (key) {
@@ -109,6 +111,8 @@ function put(path, value, key) {
 function drop(path, key) {
 
     var response = promise();
+
+    path = path.replace(/\.json$/, '');
 
     console.log(key ? 'DB: drop ' + path + '; key ' + key : 'DB: drop all - ' + path);
 

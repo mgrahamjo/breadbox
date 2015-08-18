@@ -87,7 +87,8 @@ module.exports = {
 
         let context = {
             collection: request.params.collection,
-            className: 'admin'
+            className: 'admin',
+            token: request.session.get(request.cookies.id).token
         };
 
         fs.exists(parentDir + '/models/' + request.params.collection + '.json', exists => {
@@ -112,7 +113,8 @@ module.exports = {
     '/admin/new-user': function(response, request) {
 
         let context = {
-            className: 'admin'
+            className: 'admin',
+            token: request.session.get(request.cookies.id).token
         };
 
         if (request.body) {

@@ -18,6 +18,8 @@
 
 <form action="/admin/new-user" method="post" onsubmit="return validate()" class="form">
 
+    <input type="hidden" name="token" value="{{token}}" />
+
     <p>Username</p>
 	<input type="text" name="name"><br>
 

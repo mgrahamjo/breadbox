@@ -102,9 +102,15 @@ function sortRoutes() {
       var routeNames = _step.value;
 
       Object.keys(routeNames).forEach(function (route) {
+
         if (route.match(varRegx)) {
-          variableUrls.push(route);
+
+          variableUrls.push({
+            route: route,
+            regx: new RegExp('^' + route.split('|')[0].replace(varRegx, '([^/]+)') + '$')
+          });
         } else {
+
           staticUrls.push(route);
         }
       });
@@ -137,6 +143,42 @@ function redirect(status, headers) {
 
 function isAuthenticated(session) {
   return session && session.name;
+}
+
+// getTemplate passes the name of the route we want,
+// the path to the default template for this route,
+// and the request object to our rendering function,
+// and sends the result to the client.
+function getTemplate(filepath, request, controller) {
+
+  render(filepath, request, controller).then(function (template) {
+    var headers = arguments[1] === undefined ? {} : arguments[1];
+
+    var status = headers.status;
+
+    delete headers.status;
+
+    headers['Content-Type'] = headers['Content-Type'] || mime['.html'];
+
+    global.res.writeHead(status || 200, headers);
+
+    global.res.end(template);
+  });
+}
+
+// Map values in URL to variables in route
+function parseVars(pathMatches, keys) {
+
+  var params = {};
+
+  for (var i = 0; i < pathMatches.length; i++) {
+
+    keys[i] = keys[i].replace('{{', '').replace('}}', '');
+
+    params[keys[i]] = pathMatches[i];
+  }
+
+  return params;
 }
 
 // init is passed to the user and called with the app settings
@@ -193,6 +235,7 @@ function init() {
     // the request object we will make available to controllers
     request = undefined;
 
+    // Login function is curried for access to res, settings, and pathname
     function login() {
       res.writeHead(302, {
         'Location': settings.loginPage + '?from=' + pathname
@@ -200,68 +243,23 @@ function init() {
       res.end();
     }
 
-    // getTemplate passes the name of the route we want,
-    // the path to the default template for this route,
-    // and the request object to our rendering function,
-    // and sends the result to the client.
-    function getTemplate(filepath, request, controller) {
-
-      render(filepath, request, controller).then(function (template) {
-        var headers = arguments[1] === undefined ? {} : arguments[1];
-
-        var status = headers.status;
-
-        delete headers.status;
-
-        headers['Content-Type'] = headers['Content-Type'] || mime[extension];
-
-        res.writeHead(status || 200, headers);
-
-        res.end(template);
-      });
-    }
-
-    // parseVars takes a requested route and an array of pre-interpolated
-    // variables in that route and populates the params object.
-    // Param keys are the variables defined in the controllers,
-    // and values are the respective globs in the given route.
-    function parseVars(route, keys) {
-      // Replace the variable in the route with a capturing group, cast it as
-      // a regex, and test that against the URL
-      var pathMatches = new RegExp('^' + route.split('|')[0].replace(varRegx, '([^/]+)') + '$').exec(relPath);
-      // If the URL matches the route regex...
-      if (pathMatches) {
-        // Save the route so we can reference it when we get our context
-        routeName = route;
-        // disregard relPath returned by exec
-        pathMatches.shift();
-        // Map values in URL to variables in route
-        for (var i = 0; i < pathMatches.length; i++) {
-          keys[i] = keys[i].replace('{{', '').replace('}}', '');
-          params[keys[i]] = pathMatches[i];
-          // Remove the variable from the URL since we've converted it to a parameter,
-          // then remove any unnecessary slashes that are left over.
-          relPath = relPath.replace(pathMatches[i], '');
-        }
-        return true;
-      }
-      return false;
-    }
-
     // If this is a template and it isn't a static URL...
     if (isView && urls['static'].indexOf(relPath) === -1) {
+      var pathMatches = undefined;
       // ...loop through the variable URLs,
       for (var i = 0; i < urls.variable.length; i++) {
         // get the param names,
-        var keys = urls.variable[i].match(varRegx);
+        pathMatches = urls.variable[i].regx.exec(relPath);
         // and look see if any variable routes match
-        if (keys && parseVars(urls.variable[i], keys)) {
+        if (pathMatches) {
+          pathMatches.shift();
+          routeName = urls.variable[i].route;
+          params = parseVars(pathMatches, routeName.match(varRegx));
+          relPath = fixDoubleSlashes(relPath.replace(varRegx, ''));
           break;
         }
       }
     }
-
-    relPath = fixDoubleSlashes(relPath);
 
     // Treat all extensionless requests as html.
     // Re-route html requests to views folder.
@@ -344,6 +342,8 @@ function init() {
                   request.body = fields;
                   request.files = files;
                   getTemplate(filepath, request, controller);
+                } else {
+                  crash.handle('CSRF verfication failed.', 401);
                 }
               }, function () {
                 crash.handle('CSRF verfication failed.', 401);

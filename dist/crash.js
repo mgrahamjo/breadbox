@@ -13,11 +13,11 @@ module.exports = {
 
 		if (err) {
 
-			console.error(err);
+			console.trace(err);
 
 			var errorData = {
 				status: status,
-				message: err
+				stack: err.stack
 			};
 
 			if (!die && global.res) {
@@ -49,8 +49,7 @@ module.exports = {
 
 		try {
 
-			success();
-			result.resolve();
+			result.resolve(success());
 		} catch (err) {
 
 			if (fail) {

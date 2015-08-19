@@ -274,6 +274,8 @@ function init() {
 
     filepath = fixDoubleSlashes(filepath);
 
+    routeName = routeName.replace(/\.html$/, '');
+
     if (isView) {
 
       controller = controllers[routeName];

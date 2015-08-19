@@ -6,7 +6,7 @@ var read = require('fs').readFile,
     promise = require('./promise'),
     crash = require('./crash'),
     htmlEscape = require('./htmlEscape'),
-    includeRegx = /{{\s*?include\s(\S*?)s*?}}/i,
+    includeRegx = /{{\s*?include\s(\S*?)\s*?}}/i,
     varRegx = /{{([\s\S]*?)}}/,
     forIn = /{{\s*?for\s*?\S*?\s*?in\s*?\S*?\s*?}}/i,
     endfor = /{{\s*?endfor\s*?}}/i,
@@ -125,7 +125,7 @@ function parseIncludes(template, admin, callback) {
         raw = match[0];
         path = match[1];
 
-        viewPath = admin ? __dirname + '/../views/' : basePath + '/views/';
+        viewPath = admin ? __dirname + '../views/' : basePath + 'views/';
 
         read(viewPath + path + '.html', { encoding: 'utf8' }, function (err, html) {
 

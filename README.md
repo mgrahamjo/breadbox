@@ -24,4 +24,4 @@ breadbox.init({
 <h1>Hello, {{person}}!</h1>
 ```
 
-Run `node index.js` then open http://localhost:1337 in your browser.
+Run `node index` then open http://localhost:1337 in your browser.

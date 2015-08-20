@@ -57,12 +57,12 @@ function get(path, internal) {
                     });
                 } else {
 
-                    response.resolve({});
+                    response.resolve();
                 }
             });
         } else {
 
-            response.resolve({});
+            response.resolve();
         }
     });
 
@@ -87,9 +87,16 @@ function put(path, value, key) {
 
                 get(path, true).then(function (data) {
 
-                    vm.createContext(data);
+                    if (data) {
 
-                    vm.runInNewContext(key + '=' + JSON.stringify(value), data);
+                        vm.createContext(data);
+
+                        vm.runInNewContext(key + '=' + JSON.stringify(value), data);
+                    } else {
+
+                        data = {};
+                        data[key] = value;
+                    }
 
                     save(path, data, response);
                 });

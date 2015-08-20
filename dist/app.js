@@ -323,7 +323,8 @@ function init() {
           cookies: cookies,
           redirect: redirect,
           settings: settings,
-          session: session
+          session: session,
+          sess: session.get(cookies.id)
         };
 
         console.log('Request: ' + filepath);

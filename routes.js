@@ -7,9 +7,78 @@ const db = require('./db'),
     crash = require('./crash'),
     csrf = require('./csrf'),
     thisDir = path.join(__dirname, '..'),
-    parentDir = path.join(__dirname, '../../..');
+    parentDir = path.join(__dirname, '../../..'),
+    css = path.join(__dirname, '../..').split(path.sep).pop() + '/breadbox/css';
 
 module.exports = {
+
+    '/index': function(response, request) {
+
+        let context = {
+            parent: parentDir,
+            className: 'admin',
+            css: css
+        };
+
+        // POST
+        if (request.body) {
+
+            crash.attempt(() => {
+
+                bcrypt.genSalt(10, (err, salt) => {
+
+                    bcrypt.hash(request.body.password, salt, null, (err, passHash) => {
+                        
+                        let user = {
+                            password: passHash,
+                            role: request.body.role
+                        };
+
+                        console.log(user);
+
+                        db.put('users', user, request.body.name).then(success => {
+
+                            context.saved = success;
+
+                            response.resolve(context, parentDir + '/views/breadbox-setup.html');
+                        });
+                    });
+                });
+
+            }, err => {
+
+                console.error(err);
+
+                context.error = 'Save failed.';
+
+                response.resolve(context, parentDir + '/views/breadbox-setup.html');
+            });
+
+        // GET
+        } else {
+
+            fs.exists(parentDir + '/views/breadbox-setup.html', exists => {
+
+                if (!exists) {
+
+                    fs.readFile(thisDir + '/views/breadbox-setup.html', (err, data) => {
+
+                        fs.writeFile(parentDir + '/views/breadbox-setup.html', data);
+                    });
+                }
+
+                db.get('users').then(users => {
+
+                    if (!users) {
+                        context.noUsers = true;
+                        context.token = request.sess.token;
+                    }
+
+                    response.resolve(context, exists ? parentDir + '/views/breadbox-setup.html' : thisDir + '/views/breadbox-setup.html');
+                });
+            });
+        }
+    },
 
     '/admin': function(response, request) {
 
@@ -27,7 +96,8 @@ module.exports = {
                         response.resolve({
                             collections: collections,
                             className: 'admin',
-                            userRole: request.session.get(request.cookies.id).role
+                            userRole: request.sess.role,
+                            css: css
                         });
                     }
                 });
@@ -40,7 +110,8 @@ module.exports = {
         let context = {
             collection: request.params.collection,
             className: 'admin',
-            token: request.session.get(request.cookies.id).token
+            token: request.sess.token,
+            css: css
         };
 
         if (request.body) {
@@ -88,7 +159,8 @@ module.exports = {
         let context = {
             collection: request.params.collection,
             className: 'admin',
-            token: request.session.get(request.cookies.id).token
+            token: request.sess.token,
+            css: css
         };
 
         fs.exists(parentDir + '/models/' + request.params.collection + '.json', exists => {
@@ -114,7 +186,8 @@ module.exports = {
 
         let context = {
             className: 'admin',
-            token: request.session.get(request.cookies.id).token
+            token: request.sess.token,
+            css: css
         };
 
         if (request.body) {
@@ -139,7 +212,7 @@ module.exports = {
                     });
                 });
 
-            }, (err) => {
+            }, err => {
 
                 console.error(err);
 
@@ -170,7 +243,8 @@ module.exports = {
         let context = {
                 className: 'admin',
                 from: request.query.from || '/admin',
-                failed: false
+                failed: false,
+                css: css
             };
 
         // If this is a post request, then let's try to log in.
@@ -192,7 +266,7 @@ module.exports = {
                                 request.session.save(request.cookies.id, {
                                     name: user,
                                     role: users[user].role,
-                                    token: request.session.get(request.cookies.id).token
+                                    token: request.sess.token
                                 });
 
                                 request.redirect(302, {
@@ -238,13 +312,17 @@ module.exports = {
 
         response.resolve({
             className: 'admin', 
-            loginPage: request.settings.loginPage
+            loginPage: request.settings.loginPage,
+            css: css
         }, undefined, {'Set-Cookie': 'id=', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT' });
     },
 
     '/error': function(response, error) {
 
-        response.resolve({ error: error });
+        response.resolve({
+            error: error,
+            css: css
+        });
     }
 
 };

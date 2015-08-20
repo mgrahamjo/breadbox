@@ -1,0 +1,94 @@
+<!doctype html>
+<html>
+<head>
+    <title>Breadbox</title>
+    <link href='http://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link href='/{{css}}/admin.css' rel='stylesheet' type='text/css'>
+</head>
+<body class="{{className}}">
+
+<div class="header">
+    
+    <h1>Welcome to Breadbox.</h1>
+
+    {{if saved}}
+        <div class="msg saved">Saved!</div>
+    {{endif}}
+
+    {{if error}}
+        <div class="msg error">{{error}}</div>
+    {{endif}}
+
+</div>
+
+<div class="container">
+
+    <p><strong><a href="//mikej.codes/breadbox/docs" target="_blank">Here are the docs</a>.</strong></p>
+
+    <p>This is the default '/index' route. The template for this page has been moved to {{parent}}/views/breadbox-setup.html for you to view and edit if you want to.</p>
+
+    <p>If {{parent}}/ is not supposed to be the root directory for your project, make sure you've installed Breadbox in the <a href="//mikej.codes/breadbox/docs#getting-started" target="_blank">right location</a>.</p>
+
+    {{if noUsers}}
+
+    <p><strong>You haven't created any users yet.</strong> If you plan to use authentication, including for your own access to the <a href="/admin">breadbox admin interface</a>, create a user now:</p>
+
+    <form action="/" method="post" onsubmit="return validate()" class="form">
+
+        <input type="hidden" name="token" value="{{token}}" />
+
+        <p>Username</p>
+        <input type="text" name="name"><br>
+
+        <p>Role</p>
+        <input type="text" name="role" value="admin"><br>
+
+        <p>Password</p>
+        <input type="password" name="password"><br>
+
+        <p>Confirm Password</p>
+        <input type="password"><br>
+
+        <input class="btn" type="submit" value="save" />
+
+    </form>
+
+</div>
+
+<script>
+
+    var $ = function(selector) {
+        var els = [].slice.call(document.querySelectorAll(selector));
+        return els.length > 1 ? els : els[0];
+    };
+
+    function validate() {
+
+        var valid = true;
+
+        $('input').forEach(function(input) {
+            if (!input.value) {
+                valid = false;
+            }
+        });
+
+        if ($('[type="password"]')[0].value !== $('[type="password"]')[1].value) {
+            valid = false;
+        }
+
+        if (!valid) {
+            $('[type="submit"]').classList.add('error');
+        } else {
+            $('[type="submit"]').classList.remove('error');
+        }
+
+        return valid;
+    }
+
+</script>
+
+{{endif}}
+
+</body>
+
+</html>

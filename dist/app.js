@@ -281,8 +281,12 @@ function init() {
       controller = controllers[routeName];
 
       if (typeof controller === 'undefined') {
-        controller = controllers[routeName + '|authenticate'];
-        authenticate = true;
+        if (routeName === '/index') {
+          controller = appRoutes['/index'];
+        } else {
+          controller = controllers[routeName + '|authenticate'];
+          authenticate = true;
+        }
         if (typeof controller === 'undefined') {
           filepath = filepath.replace('/views', '/' + parentDir + '/breadbox/views');
           controller = appRoutes[routeName];

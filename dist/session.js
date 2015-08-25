@@ -14,9 +14,13 @@ module.exports = (function () {
 			sessions = data || {};
 		},
 
-		save: function save(id, data) {
+		save: function save(id, data, key) {
 
-			sessions[id] = data;
+			if (key) {
+				sessions[id][key] = data;
+			} else {
+				sessions[id] = data;
+			}
 		},
 
 		end: function end(id) {
@@ -26,7 +30,12 @@ module.exports = (function () {
 
 		get: function get(id) {
 
-			return id ? sessions[id] : sessions;
+			return sessions[id];
+		},
+
+		all: function all() {
+
+			return sessions;
 		}
 	};
 })();

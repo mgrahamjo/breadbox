@@ -6,6 +6,13 @@ var crypto = require('crypto'),
 
 var tokens = {};
 
+function freshToken() {
+
+	var expires = new Date();
+
+	return expires.setMinutes(expires.getMinutes() + 10);
+}
+
 module.exports = {
 
 	makeToken: function makeToken(request) {
@@ -30,7 +37,8 @@ module.exports = {
 					tokens[id] = token;
 
 					request.session.save(id, {
-						token: token
+						token: token,
+						expires: freshToken()
 					});
 
 					response.resolve(id, token);
@@ -39,5 +47,7 @@ module.exports = {
 		}
 
 		return response;
-	}
+	},
+
+	freshToken: freshToken
 };

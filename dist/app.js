@@ -16,6 +16,9 @@ url = require('url'),
 // For other kinds of url parsing
 path = require('path'),
 
+// For managing tokens
+csrf = require('./csrf'),
+
 // Our function that returns an interpolated template
 render = require('./render'),
 
@@ -64,7 +67,7 @@ process.on('uncaughtException', function (err) {
 
 // Before interrupting the server manually, save current sessions.
 process.on('SIGINT', function () {
-  db.put('session-dump', session.get()).then(function () {
+  db.put('session-dump', session.all()).then(function () {
     process.exit();
   });
 });
@@ -141,8 +144,13 @@ function redirect(status, headers) {
   global.res.end();
 }
 
-function isAuthenticated(session) {
-  return session && session.name;
+function isAuthenticated(id) {
+  var sess = session.get(id);
+  if (sess && sess.name && new Date() < sess.expires) {
+    // If the session is good, take this opportunity to refresh the token
+    session.save(id, csrf.freshToken(), 'expires');
+    return true;
+  }
 }
 
 // getTemplate passes the name of the route we want,
@@ -159,6 +167,8 @@ function getTemplate(filepath, request, controller) {
     delete headers.status;
 
     headers['Content-Type'] = headers['Content-Type'] || mime['.html'];
+
+    headers['Cache-Control'] = headers['Cache-Control'] || 'max-age=' + (request.settings.cacheHtml ? request.settings.cacheLength : 0);
 
     global.res.writeHead(status || 200, headers);
 
@@ -188,6 +198,8 @@ function init() {
 
   settings.loginPage = settings.loginPage || '/login';
   settings.logoutPage = settings.logoutPage || '/logout';
+  settings.cacheHtml = settings.cacheHtml === undefined ? true : settings.cacheHtml;
+  settings.cacheLength = settings.cacheLength || 2419200; // 1 month cache
 
   var urls = sortRoutes(settings.controllers, appRoutes);
 
@@ -235,7 +247,6 @@ function init() {
     // the request object we will make available to controllers
     request = undefined;
 
-    // Login function is curried for access to res, settings, and pathname
     function login() {
       res.writeHead(302, {
         'Location': settings.loginPage + '?from=' + pathname
@@ -280,17 +291,17 @@ function init() {
 
       controller = controllers[routeName];
 
-      if (typeof controller === 'undefined') {
+      if (controller === undefined) {
         if (routeName === '/index') {
           controller = appRoutes['/index'];
         } else {
           controller = controllers[routeName + '|authenticate'];
           authenticate = true;
         }
-        if (typeof controller === 'undefined') {
+        if (controller === undefined) {
           filepath = filepath.replace('/views', '/' + parentDir + '/breadbox/views');
           controller = appRoutes[routeName];
-          if (typeof controller === 'undefined') {
+          if (controller === undefined) {
             crash.handle('Controller not found: ' + routeName, 404);
           }
         }
@@ -315,7 +326,7 @@ function init() {
         })();
       }
 
-      if (authenticate && pathname !== settings.loginPage && !isAuthenticated(session.get(cookies.id))) {
+      if (authenticate && pathname !== settings.loginPage && !isAuthenticated(cookies.id)) {
 
         login();
       } else {
@@ -343,9 +354,9 @@ function init() {
 
               crash.attempt(function () {
 
-                var token = session.get(cookies.id).token;
+                var token = request.sess.token;
 
-                if (token && cookies.id && fields.token === token) {
+                if (token && fields.token === token && new Date() < request.sess.expires) {
                   request.body = fields;
                   request.files = files;
                   getTemplate(filepath, request, controller);
@@ -379,7 +390,8 @@ function init() {
             crash.handle(err).then(function () {
 
               res.writeHead(200, {
-                'Content-Type': mime[extension]
+                'Content-Type': mime[extension],
+                'Cache-Control': 'max-age=' + settings.cacheLength
               });
 
               res.end(file);

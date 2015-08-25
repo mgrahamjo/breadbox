@@ -29,14 +29,16 @@ module.exports = {
 
                     bcrypt.hash(request.body.password, salt, null, function (err, passHash) {
 
-                        var user = {
+                        var user = {};
+
+                        user[request.body.name] = {
                             password: passHash,
                             role: request.body.role
                         };
 
                         console.log(user);
 
-                        db.put('users', user, request.body.name).then(function (success) {
+                        db.put('users', user).then(function (success) {
 
                             context.saved = success;
 
@@ -260,7 +262,8 @@ module.exports = {
                                 request.session.save(request.cookies.id, {
                                     name: user,
                                     role: users[user].role,
-                                    token: request.sess.token
+                                    token: request.sess.token,
+                                    expires: csrf.freshToken()
                                 });
 
                                 request.redirect(302, {

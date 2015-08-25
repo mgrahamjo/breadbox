@@ -58,6 +58,8 @@ mime = {
 // Awesome error interceptor
 crash = require('./crash');
 
+var requestSettings = undefined;
+
 // Before crashing, save current sessions.
 process.on('uncaughtException', function (err) {
   fs.writeFile(basePath + 'models/session-dump.json', JSON.stringify(session.get()), function () {
@@ -139,8 +141,21 @@ function sortRoutes() {
   };
 }
 
-function redirect(status, headers) {
-  global.res.writeHead(status, headers);
+function mergeHeaders(headers) {
+
+  delete headers.status;
+
+  headers['Content-Type'] = headers['Content-Type'] || mime['.html'];
+
+  headers['Cache-Control'] = headers['Cache-Control'] || 'max-age=' + (requestSettings.cacheHtml ? requestSettings.cacheLength : 0);
+
+  return headers;
+}
+
+function redirect(location) {
+  var status = arguments[1] === undefined ? 302 : arguments[1];
+
+  global.res.writeHead(status, mergeHeaders({ 'Location': location }));
   global.res.end();
 }
 
@@ -164,13 +179,7 @@ function getTemplate(filepath, request, controller) {
 
     var status = headers.status;
 
-    delete headers.status;
-
-    headers['Content-Type'] = headers['Content-Type'] || mime['.html'];
-
-    headers['Cache-Control'] = headers['Cache-Control'] || 'max-age=' + (request.settings.cacheHtml ? request.settings.cacheLength : 0);
-
-    global.res.writeHead(status || 200, headers);
+    global.res.writeHead(status || 200, mergeHeaders(headers));
 
     global.res.end(template);
   });
@@ -200,6 +209,8 @@ function init() {
   settings.logoutPage = settings.logoutPage || '/logout';
   settings.cacheHtml = settings.cacheHtml === undefined ? true : settings.cacheHtml;
   settings.cacheLength = settings.cacheLength || 2419200; // 1 month cache
+
+  requestSettings = settings;
 
   var urls = sortRoutes(settings.controllers, appRoutes);
 

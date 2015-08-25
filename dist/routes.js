@@ -166,10 +166,7 @@ module.exports = {
 
             if (exists) {
 
-                request.redirect(302, {
-                    'Content-Type': 'text/html; charset=UTF-8',
-                    'Location': '/admin/' + request.params.collection
-                });
+                request.redirect('/admin/' + request.params.collection);
             } else {
 
                 db.put(request.params.collection, {}).then(function () {
@@ -227,10 +224,7 @@ module.exports = {
 
         db.drop(request.params.collection).then(function () {
 
-            request.redirect(302, {
-                'Content-Type': 'text/html; charset=UTF-8',
-                'Location': '/admin'
-            });
+            request.redirect('/admin');
         });
     },
 
@@ -266,10 +260,7 @@ module.exports = {
                                     expires: csrf.freshToken()
                                 });
 
-                                request.redirect(302, {
-                                    'Content-Type': 'text/html; charset=UTF-8',
-                                    'Location': context.from
-                                });
+                                request.redirect(context.from);
                                 // Incorrect password
                             } else {
                                 context.failed = true;

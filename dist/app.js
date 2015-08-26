@@ -149,6 +149,8 @@ function mergeHeaders(headers) {
 
   headers['Cache-Control'] = headers['Cache-Control'] || 'max-age=' + (requestSettings.cacheHtml ? requestSettings.cacheLength : 0);
 
+  headers['Keep-Alive'] = headers['Keep-Alive'] || 'timeout=15, max=100';
+
   return headers;
 }
 

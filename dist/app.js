@@ -58,11 +58,9 @@ mime = {
 // Awesome error interceptor
 crash = require('./crash');
 
-var requestSettings = undefined;
-
 // Before crashing, save current sessions.
 process.on('uncaughtException', function (err) {
-  fs.writeFile(basePath + 'models/session-dump.json', JSON.stringify(session.get()), function () {
+  fs.writeFile(basePath + 'models/session-dump.json', JSON.stringify(session.all()), function () {
     throw err;
   });
 });
@@ -147,27 +145,30 @@ function mergeHeaders(headers) {
 
   headers['Content-Type'] = headers['Content-Type'] || mime['.html'];
 
-  headers['Cache-Control'] = headers['Cache-Control'] || 'max-age=' + (requestSettings.cacheHtml ? requestSettings.cacheLength : 0);
+  headers['Cache-Control'] = headers['Cache-Control'] || 'max-age=' + (global.settings.cacheHtml ? global.settings.cacheLength : 0);
 
   headers['Keep-Alive'] = headers['Keep-Alive'] || 'timeout=15, max=100';
 
   return headers;
 }
 
+function csrfFail() {
+  crash.handle('CSRF verfication failed.', 401, mergeHeaders({ 'Set-Cookie': 'id=', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT' }));
+}
+
 function redirect(location) {
   var status = arguments[1] === undefined ? 302 : arguments[1];
 
+  console.log('redirecting to ' + location);
   global.res.writeHead(status, mergeHeaders({ 'Location': location }));
   global.res.end();
 }
 
 function isAuthenticated(id) {
+
   var sess = session.get(id);
-  if (sess && sess.name && new Date() < sess.expires) {
-    // If the session is good, take this opportunity to refresh the token
-    session.save(id, csrf.freshToken(), 'expires');
-    return true;
-  }
+
+  return sess && sess.name && new Date() < new Date(sess.expires);
 }
 
 // getTemplate passes the name of the route we want,
@@ -184,6 +185,11 @@ function getTemplate(filepath, request, controller) {
     global.res.writeHead(status || 200, mergeHeaders(headers));
 
     global.res.end(template);
+
+    // refresh token
+    if (request.sess && request.sess.token) {
+      session.save(request.cookies.id, csrf.freshExpiration(), 'expires');
+    }
   });
 }
 
@@ -211,8 +217,9 @@ function init() {
   settings.logoutPage = settings.logoutPage || '/logout';
   settings.cacheHtml = settings.cacheHtml === undefined ? true : settings.cacheHtml;
   settings.cacheLength = settings.cacheLength || 2419200; // 1 month cache
+  settings.sessionLength = settings.sessionLength || 600000; // 10 minute session
 
-  requestSettings = settings;
+  global.settings = settings;
 
   var urls = sortRoutes(settings.controllers, appRoutes);
 
@@ -259,13 +266,6 @@ function init() {
 
     // the request object we will make available to controllers
     request = undefined;
-
-    function login() {
-      res.writeHead(302, {
-        'Location': settings.loginPage + '?from=' + pathname
-      });
-      res.end();
-    }
 
     // If this is a template and it isn't a static URL...
     if (isView && urls['static'].indexOf(relPath) === -1) {
@@ -341,7 +341,7 @@ function init() {
 
       if (authenticate && pathname !== settings.loginPage && !isAuthenticated(cookies.id)) {
 
-        login();
+        redirect(settings.loginPage + '?from=' + pathname);
       } else {
 
         request = {
@@ -365,20 +365,21 @@ function init() {
 
             crash.handle(err).then(function () {
 
-              crash.attempt(function () {
+              if (request.sess && request.sess.token) {
 
                 var token = request.sess.token;
 
-                if (token && fields.token === token && new Date() < request.sess.expires) {
+                console.log('checking if ' + new Date() + ' < ' + new Date(request.sess.expires) + ' (' + (new Date() < new Date(request.sess.expires)) + ')');
+                if (fields.token === token && new Date() < new Date(request.sess.expires)) {
                   request.body = fields;
                   request.files = files;
                   getTemplate(filepath, request, controller);
                 } else {
-                  crash.handle('CSRF verfication failed.', 401);
+                  csrfFail();
                 }
-              }, function () {
-                crash.handle('CSRF verfication failed.', 401);
-              });
+              } else {
+                csrfFail();
+              }
             });
           });
 

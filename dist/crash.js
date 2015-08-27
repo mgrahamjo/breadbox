@@ -7,7 +7,8 @@ module.exports = {
 	// Error interceptor
 	handle: function handle(err) {
 		var status = arguments[1] === undefined ? 500 : arguments[1];
-		var die = arguments[2] === undefined ? false : arguments[2];
+		var headers = arguments[2] === undefined ? { 'Content-Type': 'text/html' } : arguments[2];
+		var die = arguments[3] === undefined ? false : arguments[3];
 
 		var result = promise();
 
@@ -24,9 +25,7 @@ module.exports = {
 
 				require('./render')(__dirname.replace('/dist', '/views/error.html'), errorData, require('./routes')['/error']).then(function (template) {
 
-					global.res.writeHead(status, {
-						'Content-Type': 'text/html'
-					});
+					global.res.writeHead(status, headers);
 
 					global.res.end(template);
 				});

@@ -6,22 +6,22 @@ var crypto = require('crypto'),
 
 var tokens = {};
 
-function freshToken() {
+function freshExpiration() {
 
 	var expires = new Date();
 
-	return expires.setMinutes(expires.getMinutes() + 10);
+	return expires.setMinutes(expires.getMinutes() + global.settings.sessionLength / 60000);
 }
 
 module.exports = {
 
 	makeToken: function makeToken(request) {
 
-		var response = promise();
+		var result = promise();
 
-		if (request.session && request.session.token) {
+		if (request.sess && request.sess.token) {
 
-			response.resolve(request.cookies.id, request.session.token);
+			result.resolve(request.cookies.id, request.sess.token);
 		} else {
 
 			crypto.randomBytes(32, function (err, rand) {
@@ -38,16 +38,16 @@ module.exports = {
 
 					request.session.save(id, {
 						token: token,
-						expires: freshToken()
+						expires: freshExpiration()
 					});
 
-					response.resolve(id, token);
+					result.resolve(id, token);
 				});
 			});
 		}
 
-		return response;
+		return result;
 	},
 
-	freshToken: freshToken
+	freshExpiration: freshExpiration
 };

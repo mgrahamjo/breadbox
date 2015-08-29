@@ -158,9 +158,11 @@ function csrfFail() {
 
 function redirect(location) {
   var status = arguments[1] === undefined ? 302 : arguments[1];
+  var headers = arguments[2] === undefined ? {} : arguments[2];
 
   console.log('redirecting to ' + location);
-  global.res.writeHead(status, mergeHeaders({ 'Location': location }));
+  headers.Location = location;
+  global.res.writeHead(status, mergeHeaders(headers));
   global.res.end();
 }
 
@@ -369,7 +371,6 @@ function init() {
 
                 var token = request.sess.token;
 
-                console.log('checking if ' + new Date() + ' < ' + new Date(request.sess.expires) + ' (' + (new Date() < new Date(request.sess.expires)) + ')');
                 if (fields.token === token && new Date() < new Date(request.sess.expires)) {
                   request.body = fields;
                   request.files = files;

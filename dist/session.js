@@ -14,8 +14,6 @@ module.exports = (function () {
 
 		Object.keys(sessions).forEach(function (id) {
 
-			console.log(now + ' > ' + sessions[id].expires + ' = ' + (now > sessions[id].expires));
-
 			if (now > new Date(sessions[id].expires)) {
 
 				console.log('deleting expired session ' + id);
@@ -31,7 +29,7 @@ module.exports = (function () {
 
 			clearInterval(timer);
 
-			timer = setInterval(deleteExpiredSessions, global.settings.sessionLength);
+			timer = setInterval(deleteExpiredSessions, 12000); // check for expired sessions every 2 minutes
 
 			sessions = data || {};
 

@@ -142,7 +142,7 @@ function drop(path, key) {
                 fs.unlink(modelPath + path + '.json', function (err) {
 
                     crash.handle(err).then(function () {
-                        response.resolve(err);
+                        response.resolve();
                     });
                 });
             }

@@ -262,8 +262,7 @@ module.exports = {
                                 request.session.save(request.cookies.id, {
                                     name: user,
                                     role: users[user].role,
-                                    token: request.sess.token,
-                                    expires: csrf.freshExpiration()
+                                    token: request.sess.token
                                 });
 
                                 request.redirect(context.from);
@@ -291,23 +290,10 @@ module.exports = {
         // This is not a post request
         } else {
 
-            if (request.sess && request.sess.token) {
-
-                request.session.save(request.cookies.id, {
-                    token: request.sess.token,
-                    expires: csrf.freshExpiration()
-                });
-                response.resolve(context);
-
-           } else {
-
-                csrf.makeToken(request).then((id, token) => {
-                    context.token = token;
-                    response.resolve(context, undefined, {
-                        'Set-Cookie': 'id=' + id
-                    });
-                });
-           }
+            csrf.makeToken(request).then((headers, token) => {
+                context.token = token;
+                response.resolve(context, undefined, headers);
+            });
         }
     }, 
 
@@ -319,7 +305,7 @@ module.exports = {
             className: 'admin', 
             loginPage: request.settings.loginPage,
             css: css
-        }, undefined, {'Set-Cookie': 'id=', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT' });
+        }, undefined, { 'Set-Cookie': 'id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT' });
     },
 
     '/error': function(response, error) {

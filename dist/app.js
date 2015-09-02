@@ -61,7 +61,8 @@ crash = require('./crash');
 // Before crashing, save current sessions.
 process.on('uncaughtException', function (err) {
   fs.writeFile(basePath + 'models/session-dump.json', JSON.stringify(session.all()), function () {
-    throw err;
+    console.log(err.stack);
+    process.exit(1);
   });
 });
 
@@ -153,7 +154,7 @@ function mergeHeaders(headers) {
 }
 
 function csrfFail() {
-  crash.handle('CSRF verfication failed.', 401, mergeHeaders({ 'Set-Cookie': 'id=', 'expires': 'Thu, 01 Jan 1970 00:00:00 GMT' }));
+  crash.handle('CSRF verfication failed.', 401, mergeHeaders({ 'Set-Cookie': 'id=; expires=Thu, 01 Jan 1970 00:00:00 GMT' }));
 }
 
 function redirect(location) {
@@ -170,7 +171,7 @@ function isAuthenticated(id) {
 
   var sess = session.get(id);
 
-  return sess && sess.name && new Date() < new Date(sess.expires);
+  return sess && sess.name;
 }
 
 // getTemplate passes the name of the route we want,
@@ -187,11 +188,6 @@ function getTemplate(filepath, request, controller) {
     global.res.writeHead(status || 200, mergeHeaders(headers));
 
     global.res.end(template);
-
-    // refresh token
-    if (request.sess && request.sess.token) {
-      session.save(request.cookies.id, csrf.freshExpiration(), 'expires');
-    }
   });
 }
 
@@ -371,7 +367,7 @@ function init() {
 
                 var token = request.sess.token;
 
-                if (fields.token === token && new Date() < new Date(request.sess.expires)) {
+                if (fields.token === token) {
                   request.body = fields;
                   request.files = files;
                   getTemplate(filepath, request, controller);
@@ -428,5 +424,6 @@ module.exports = {
   db: db,
   promise: promise,
   handle: crash.handle,
-  attempt: crash.attempt
+  attempt: crash.attempt,
+  csrf: csrf
 };

@@ -4,13 +4,13 @@ var crypto = require('crypto'),
     crash = require('./crash'),
     promise = require('./promise');
 
-var tokens = {};
-
-function freshExpiration() {
+function freshHeader(id) {
 
 	var expires = new Date();
 
-	return expires.setMinutes(expires.getMinutes() + global.settings.sessionLength / 60000);
+	expires = new Date(expires.setMinutes(expires.getMinutes() + global.settings.sessionLength / 60000)).toGMTString();
+
+	return { 'Set-Cookie': 'id=' + id + '; path=/; expires=' + expires };
 }
 
 module.exports = {
@@ -21,7 +21,7 @@ module.exports = {
 
 		if (request.sess && request.sess.token) {
 
-			result.resolve(request.cookies.id, request.sess.token);
+			result.resolve(freshHeader(request.cookies.id), request.sess.token);
 		} else {
 
 			crypto.randomBytes(32, function (err, rand) {
@@ -34,20 +34,15 @@ module.exports = {
 					    id = rand.substring(0, mid),
 					    token = rand.substring(mid);
 
-					tokens[id] = token;
-
 					request.session.save(id, {
-						token: token,
-						expires: freshExpiration()
+						token: token
 					});
 
-					result.resolve(id, token);
+					result.resolve(freshHeader(id), token);
 				});
 			});
 		}
 
 		return result;
-	},
-
-	freshExpiration: freshExpiration
+	}
 };

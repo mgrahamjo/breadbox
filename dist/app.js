@@ -363,6 +363,8 @@ function init() {
 
             crash.handle(err).then(function () {
 
+              console.log(cookies.id);
+
               if (request.sess && request.sess.token) {
 
                 var token = request.sess.token;

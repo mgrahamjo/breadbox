@@ -4,13 +4,18 @@ var crypto = require('crypto'),
     crash = require('./crash'),
     promise = require('./promise');
 
-function freshHeader(id) {
+function freshExpiration() {
 
 	var expires = new Date();
 
-	expires = new Date(expires.setMinutes(expires.getMinutes() + global.settings.sessionLength / 60000)).toGMTString();
+	return new Date(expires.setMinutes(expires.getMinutes() + global.settings.sessionLength / 60000));
+}
 
-	return { 'Set-Cookie': 'id=' + id + '; path=/; expires=' + expires };
+function freshHeader(id, expires) {
+
+	expires = expires || freshExpiration();
+
+	return { 'Set-Cookie': 'id=' + id + '; path=/; expires=' + expires.toGMTString() };
 }
 
 module.exports = {
@@ -32,13 +37,15 @@ module.exports = {
 
 					var mid = Math.floor(rand.length / 2),
 					    id = rand.substring(0, mid),
-					    token = rand.substring(mid);
+					    token = rand.substring(mid),
+					    expires = freshExpiration();
 
 					request.session.save(id, {
-						token: token
+						token: token,
+						expires: expires
 					});
 
-					result.resolve(freshHeader(id), token);
+					result.resolve(freshHeader(id, expires), token);
 				});
 			});
 		}

@@ -310,7 +310,10 @@ function init() {
         } else {
           controller = controllers[routeName];
         }
-
+        if (controller === undefined) {
+          controller = controllers[routeName + '|authenticate'];
+          authenticate = true;
+        }
         if (controller === undefined) {
           authenticate = true;
           filepath = filepath.replace('/views', '/' + parentDir + '/breadbox/views');

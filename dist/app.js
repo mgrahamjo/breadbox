@@ -302,14 +302,17 @@ function init() {
 
       controller = controllers[routeName];
 
+      authenticate = routeName.indexOf('|authenticate') !== -1;
+
       if (controller === undefined) {
         if (routeName === '/index') {
           controller = appRoutes['/index'];
         } else {
-          controller = controllers[routeName + '|authenticate'];
-          authenticate = true;
+          controller = controllers[routeName];
         }
+
         if (controller === undefined) {
+          authenticate = true;
           filepath = filepath.replace('/views', '/' + parentDir + '/breadbox/views');
           controller = appRoutes[routeName];
           if (controller === undefined) {
@@ -362,8 +365,6 @@ function init() {
           new formidable.IncomingForm().parse(req, function (err, fields, files) {
 
             crash.handle(err).then(function () {
-
-              console.log(cookies.id);
 
               if (request.sess && request.sess.token) {
 

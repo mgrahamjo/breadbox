@@ -256,7 +256,8 @@ module.exports = {
                                 request.session.save(request.cookies.id, {
                                     name: user,
                                     role: users[user].role,
-                                    token: request.sess.token
+                                    token: request.sess.token,
+                                    expires: request.sess.expires
                                 });
 
                                 request.redirect(context.from);

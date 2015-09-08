@@ -136,16 +136,13 @@ function drop(path, key) {
 
                 get(path, true).then(function (data) {
 
-                    if (data) {
+                    if (key.indexOf('.') !== -1 || key.indexOf('[') !== -1) {
 
-                        if (key.indexOf('.') !== -1 || key.indexOf('[') !== -1) {
+                        vm.createContext(data);
 
-                            vm.createContext(data);
-
-                            vm.runInNewContext('delete ' + key, data);
-                        } else {
-                            delete data[key];
-                        }
+                        vm.runInNewContext('delete ' + key, data);
+                    } else {
+                        delete data[key];
                     }
 
                     save(path, data, response);

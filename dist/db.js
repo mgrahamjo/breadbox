@@ -89,9 +89,14 @@ function put(path, value, key) {
 
                     if (data) {
 
-                        vm.createContext(data);
+                        if (key.indexOf('.') !== -1 || key.indexOf('[') !== -1) {
 
-                        vm.runInNewContext(key + '=' + JSON.stringify(value), data);
+                            vm.createContext(data);
+
+                            vm.runInNewContext(key + '=' + JSON.stringify(value), data);
+                        } else {
+                            data[key] = value;
+                        }
                     } else {
 
                         data = {};
@@ -131,9 +136,17 @@ function drop(path, key) {
 
                 get(path, true).then(function (data) {
 
-                    vm.createContext(data);
+                    if (data) {
 
-                    vm.runInNewContext('delete ' + key, data);
+                        if (key.indexOf('.') !== -1 || key.indexOf('[') !== -1) {
+
+                            vm.createContext(data);
+
+                            vm.runInNewContext('delete ' + key, data);
+                        } else {
+                            delete data[key];
+                        }
+                    }
 
                     save(path, data, response);
                 });

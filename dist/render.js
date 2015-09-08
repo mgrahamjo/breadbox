@@ -82,15 +82,17 @@ function parseLoops(template, context, match) {
         key = keys[1];
     }
 
-    Object.keys(list).forEach(function (value) {
-        if (key) {
-            context[index] = value;
-            context[key] = list[value];
-        } else {
-            context[index] = list[value];
-        }
-        output += parse(html, context);
-    });
+    if (list) {
+        Object.keys(list).forEach(function (value) {
+            if (key) {
+                context[index] = value;
+                context[key] = list[value];
+            } else {
+                context[index] = list[value];
+            }
+            output += parse(html, context);
+        });
+    }
 
     //context[key] = initKeyValue;
 

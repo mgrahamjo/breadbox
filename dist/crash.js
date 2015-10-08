@@ -28,7 +28,7 @@ function handle(err) {
       });
     } else {
 
-      throw err;
+      process.exit(1);
     }
   } else {
 

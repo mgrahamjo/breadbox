@@ -312,14 +312,16 @@ function init() {
         }
         if (controller === undefined) {
           controller = controllers[routeName + '|authenticate'];
-          authenticate = true;
-        }
-        if (controller === undefined) {
-          authenticate = true;
-          filepath = filepath.replace('/views', '/' + parentDir + '/breadbox/views');
-          controller = appRoutes[routeName];
-          if (controller === undefined) {
-            crash.handle('Controller not found: ' + routeName, 404);
+          if (controller !== undefined) {
+            authenticate = true;
+          } else {
+            filepath = filepath.replace('/views', '/' + parentDir + '/breadbox/views');
+            controller = appRoutes[routeName];
+            if (controller !== undefined) {
+              authenticate = true;
+            } else {
+              crash.handle('Controller not found: ' + routeName, 404);
+            }
           }
         }
       }
@@ -346,7 +348,7 @@ function init() {
       if (authenticate && pathname !== settings.loginPage && !isAuthenticated(cookies.id)) {
 
         redirect(settings.loginPage + '?from=' + pathname);
-      } else {
+      } else if (controller) {
 
         request = {
           data: req,

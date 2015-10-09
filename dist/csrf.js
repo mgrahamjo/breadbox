@@ -6,9 +6,7 @@ var crypto = require('crypto'),
 
 function freshExpiration() {
 
-	var expires = new Date();
-
-	return new Date(expires.setMinutes(expires.getMinutes() + global.settings.sessionLength / 60000));
+	return new Date(new Date().getTime() + 600000);
 }
 
 function freshHeader(id, expires) {
@@ -26,7 +24,13 @@ module.exports = {
 
 		if (request.sess && request.sess.token) {
 
-			result.resolve(freshHeader(request.cookies.id), request.sess.token);
+			var freshDate = freshExpiration();
+
+			if (request.sess.name) {
+				request.session.save(request.cookies.id, freshDate, 'expires');
+			}
+
+			result.resolve(freshHeader(request.cookies.id, freshDate), request.sess.token);
 		} else {
 
 			crypto.randomBytes(32, function (err, rand) {

@@ -6,23 +6,27 @@
 
 </div>
 
-<form action="/login?from={{from}}" method="post" class="form">
+{{ if tooManyAttempts }}
+	<p class="fail">Too many failed login attempts. Try later.</p>
+{{ else }}
+	<form action="/login?from={{from}}" method="post" class="form">
 
-	{{ if failed }}
-	<p class="fail">Wrong.</p>
-	{{ endif }}
+		{{ if failed }}
+		<p class="fail">Wrong.</p>
+		{{ endif }}
 
-	<input type="hidden" name="token" value="{{token}}">
+		<input type="hidden" name="token" value="{{token}}">
 
-	<p>Username</p>
-	<input name="username" type="text"><br>
+		<p>Username</p>
+		<input name="username" type="text"><br>
 
-	<p>Password</p>
-	<input name="password" type="password">
+		<p>Password</p>
+		<input name="password" type="password">
 
-	<input type="submit" value="log in">
+		<input type="submit" value="log in">
 
-</form>
+	</form>
+{{ endif }}
 
 <script>
 
@@ -30,7 +34,9 @@
 		return [].slice.call(document.querySelectorAll(selector))[0];
 	};
 
-	$('[name="username"]').focus();
+	if ($('[name="username"]')) {
+		$('[name="username"]').focus();
+	}
 
 </script>
 

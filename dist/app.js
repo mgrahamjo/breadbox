@@ -150,6 +150,10 @@ function mergeHeaders(headers) {
 
   headers['Keep-Alive'] = headers['Keep-Alive'] || 'timeout=15, max=100';
 
+  headers['X-XSS-Protection'] = 1;
+
+  headers['X-Content-Type-Options'] = 'nosniff';
+
   return headers;
 }
 
@@ -383,6 +387,7 @@ function init() {
                   csrfFail();
                 }
               } else {
+                console.log(request.sess);
                 csrfFail();
               }
             });

@@ -240,8 +240,23 @@ module.exports = {
                 className: 'admin',
                 from: request.query.from || '/admin',
                 failed: false,
-                css: css
+                css: css,
+                tooManyAttempts: false
             };
+
+        function fail() {
+            let fails = request.sess.fails || 0;
+            console.log(fails);
+            if (fails === 5) {
+                context.tooManyAttempts = true;
+            }
+            context.failed = true;
+            request.session.save(request.cookies.id, fails + 1, 'fails');
+            csrf.makeToken(request).then((headers, token) => {
+                context.token = token;
+                response.resolve(context, undefined, headers);
+            });
+        }
 
         // If this is a post request, then let's try to log in.
         if (request.body) {
@@ -269,14 +284,12 @@ module.exports = {
                                 request.redirect(context.from);
                             // Incorrect password
                             } else {
-                                context.failed = true;
-                                response.resolve(context);
+                                fail();
                             }
                         });
                     // User does not exist
                     } else {
-                        context.failed = true;
-                        response.resolve(context);
+                        fail();
                     }
                 });
             // Something went wrong.
@@ -284,9 +297,7 @@ module.exports = {
 
                 console.error(err);
 
-                context.failed = true;
-
-                response.resolve(context);
+                fail();
             });
         // This is not a post request
         } else {

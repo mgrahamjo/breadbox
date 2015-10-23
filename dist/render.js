@@ -10,19 +10,15 @@ var read = require('fs').readFile,
     varRegx = /{{([\s\S]*?)}}/,
     forIn = /{{\s*?for\s*?\S*?\s*?in\s*?\S*?\s*?}}/i,
     endfor = /{{\s*?endfor\s*?}}/i,
-    ifBlock = /{{\s*?if\s*?([\s\S]*?)\s*?}}/i,
+    ifBlock = /{{\s*?if\s*?[\s\S]*?\s*?}}/i,
     endif = /{{\s*?endif\s*?}}/i,
+    elseBlock = /{{\s*?else\s*?}}/i,
     basePath = path.join(__dirname, '../../../');
 
 function run(expression, context) {
     return vm.runInNewContext(expression, context, {
         timeout: 1000
     });
-}
-
-function regexIndex(str, regex, startpos) {
-    var indexOf = str.substring(startpos || 0).search(regex);
-    return indexOf >= 0 ? indexOf + (startpos || 0) : indexOf;
 }
 
 function parseVars(template, context, match) {
@@ -102,15 +98,35 @@ function parseLoops(template, context, match) {
 function parseIfs(template, context, match) {
 
     var raw = match[0],
-        expression = match[1],
+        expression = match[1].trim(),
         html = match[2],
-        doShow = undefined;
+        doShow = undefined,
+        negate = undefined;
+
+    if (expression.indexOf('not ') === 0) {
+        negate = true;
+        expression = expression.substring(3).trim();
+    }
+
+    html = html.split(elseBlock);
 
     try {
         doShow = run(expression, context);
     } catch (err) {}
 
-    return parse(doShow ? template.replace(raw, html) : template.replace(raw, ''), context);
+    if (negate) {
+        doShow = !doShow;
+    }
+
+    if (doShow) {
+        html = html[0];
+    } else if (html[1]) {
+        html = html[1];
+    } else {
+        html = '';
+    }
+
+    return parse(template.replace(raw, html), context);
 }
 
 // Recursively asyncronously parses partial includes
@@ -152,7 +168,7 @@ function getLoopRegx(template) {
 
         result = false;
         // If another for-in loop starts before this one is closed...
-    } else if (regexIndex(secondHalf, forIn) < regexIndex(secondHalf, endfor)) {
+    } else if (secondHalf.search(forIn) < secondHalf.search(endfor)) {
         // use lazy matching
         result = /{{\s*?for\s*?(\S*?)\s*?in\s*?(\S*?)\s*?}}([\s\S]*?){{\s*?endfor\s*?}}/i;
     } else {
@@ -166,18 +182,20 @@ function getLoopRegx(template) {
 function getIfRegx(template) {
 
     var result = undefined,
-        secondHalf = template.split(ifBlock)[1];
+        match = ifBlock.exec(template);
 
-    if (!secondHalf) {
+    if (match) {
 
-        result = false;
+        var secondHalf = template.substring(template.search(ifBlock) + match[0].length);
+
         // If another if block starts before this one is closed...
-    } else if (regexIndex(secondHalf, ifBlock) < regexIndex(secondHalf, endif)) {
-        // use greedy matching
-        result = /{{\s*?if\s*?([\s\S]*?)\s*?}}([\s\S]*){{\s*?endif\s*?}}/i;
-    } else {
-        // use lazy matching
-        result = /{{\s*?if\s*?([\s\S]*?)\s*?}}([\s\S]*?){{\s*?endif\s*?}}/i;
+        if (secondHalf.search(ifBlock) < secondHalf.search(endif)) {
+            // use greedy matching
+            result = /{{\s*?if\s*?([\s\S]*?)\s*?}}([\s\S]*){{\s*?endif\s*?}}/i;
+        } else {
+            // use lazy matching
+            result = /{{\s*?if\s*?([\s\S]*?)\s*?}}([\s\S]*?){{\s*?endif\s*?}}/i;
+        }
     }
 
     return result;
@@ -188,7 +206,7 @@ function parse(template, context) {
 
     var match = undefined,
         regx = undefined,
-        loopFirst = regexIndex(template, forIn) < regexIndex(template, ifBlock);
+        loopFirst = template.search(forIn) < template.search(ifBlock);
 
     if (loopFirst) {
 

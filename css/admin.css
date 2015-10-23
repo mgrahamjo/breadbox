@@ -4,7 +4,7 @@ body {
 }
 
 .admin {
-  background-color: rgb(61, 62, 68);
+  background-color: rgb(239, 239, 239);
 }
 
 .container {
@@ -23,7 +23,7 @@ textarea {
   top: 100px;
   padding: 0 20px;
   background-color: transparent;
-  color: rgb(231, 231, 231);
+  color: rgb(84, 84, 84);
   font-family: monospace;
   font-size: 10pt;
   border: 0;
@@ -48,14 +48,11 @@ input[type="text"].error {
 }
 
 .header {
-  background-color: rgb(37, 37, 37);
+  background-color: rgb(228, 228, 228);
   clear: both;
   overflow: auto;
-  color: rgb(242, 242, 242);
+  color: rgb(84, 84, 84);
   padding: 0 30px;
-  box-shadow: 1px 1px 0px rgb(26, 28, 29);
-  -moz-box-shadow: 1px 1px 0px rgb(26, 28, 29);
-  -webkit-box-shadow: 1px 1px 0px rgb(26, 28, 29);
 }
 
 .header .btn {
@@ -75,7 +72,7 @@ input[type="submit"], .btn.login {
   position: fixed;
   top: calc(100% - 50px);
   left: 13px;
-  background: rgb(0, 148, 255);
+  background-color: #429CE0;
   border: none;
   padding: 10px 25px;
   color: white;
@@ -88,9 +85,9 @@ input[type="submit"].error {
 }
 
 .btn {
-  background-color: rgb(61, 62, 68);
+  background-color: #429CE0;
   border: none;
-  padding: 10px 25px;
+  padding: 10px 20px;
   color: white;
   font-weight: bold;
   font-size: 12pt;
@@ -107,25 +104,26 @@ input[type="submit"].error {
   display: block;
   margin: 20px;
   font-size: 14pt;
-  color: white;
-  box-shadow: 1px 1px 0px rgb(26, 28, 29);
-  -moz-box-shadow: 1px 1px 0px rgb(26, 28, 29);
-  -webkit-box-shadow: 1px 1px 0px rgb(26, 28, 29);
+  box-shadow: 1px 1px 5px #E2E2E2;
+  -moz-box-shadow: 1px 1px 5px #E2E2E2;
+  -webkit-box-shadow: 1px 1px 5px #E2E2E2;
 }
 
 .collection .btn {
   margin: 0;
-  background-color: rgb(37, 37, 37);
-  width: calc(100% - 100px);
+  background-color: #F9F9F9;
+  width: calc(100% - 90px);
   display: block;
   box-sizing: border-box;
   float: left;
+  color: #429CE0;
 }
 
 .collection .btn.delete {
   background-color: rgb(195, 63, 63);
   margin: 0;
-  width: 100px;
+  width: 90px;
+  color: white;
 }
 
 .msg {
@@ -161,7 +159,7 @@ input[type="submit"].error {
 }
 
 .admin p {
-  color: white;
+  color: rgb(84, 84, 84);
 }
 
 .right {
@@ -174,9 +172,9 @@ input[type="submit"].error {
 
 input[type="text"], input[type="password"] {
   padding: 11px 10px;
-  background-color: rgb(203, 203, 203);
-  border: 1px solid black;
-  color: rgb(56, 56, 56);
+  background-color: rgb(249, 249, 249);
+  border: 1px solid #D4D4D4;
+  color: rgb(123, 123, 123);
   border-radius: 4px;
   font-size: 13px;
 }

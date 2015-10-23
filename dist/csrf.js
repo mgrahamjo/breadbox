@@ -26,7 +26,7 @@ module.exports = {
 
 			var freshDate = freshExpiration();
 
-			if (request.sess.name) {
+			if (request.sess.email) {
 				request.session.save(request.cookies.id, freshDate, 'expires');
 			}
 

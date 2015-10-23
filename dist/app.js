@@ -175,7 +175,7 @@ function isAuthenticated(id) {
 
   var sess = session.get(id);
 
-  return sess && sess.name;
+  return sess && sess.email;
 }
 
 // getTemplate passes the name of the route we want,
@@ -375,19 +375,11 @@ function init() {
 
             crash.handle(err).then(function () {
 
-              if (request.sess && request.sess.token) {
-
-                var token = request.sess.token;
-
-                if (fields.token === token) {
-                  request.body = fields;
-                  request.files = files;
-                  getTemplate(filepath, request, controller);
-                } else {
-                  csrfFail();
-                }
+              if (request.sess && request.sess.token && fields.token === request.sess.token) {
+                request.body = fields;
+                request.files = files;
+                getTemplate(filepath, request, controller);
               } else {
-                console.log(request.sess);
                 csrfFail();
               }
             });

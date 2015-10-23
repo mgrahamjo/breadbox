@@ -12,13 +12,17 @@
 	<form action="/login?from={{from}}" method="post" class="form">
 
 		{{ if failed }}
-		<p class="fail">Wrong.</p>
+			<p class="fail">Wrong.</p>
+		{{ endif }}
+
+		{{ if multipleAttempts }}
+			<p class="fail">You will be temporarily blocked after 5 failed login attempts.</p>
 		{{ endif }}
 
 		<input type="hidden" name="token" value="{{token}}">
 
-		<p>Username</p>
-		<input name="username" type="text"><br>
+		<p>Email</p>
+		<input name="email" type="text"><br>
 
 		<p>Password</p>
 		<input name="password" type="password">
@@ -34,8 +38,8 @@
 		return [].slice.call(document.querySelectorAll(selector))[0];
 	};
 
-	if ($('[name="username"]')) {
-		$('[name="username"]').focus();
+	if ($('[name="email"]')) {
+		$('[name="email"]').focus();
 	}
 
 </script>

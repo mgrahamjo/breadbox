@@ -49,7 +49,7 @@ module.exports = {
 
             }, err => {
 
-                console.error(err);
+                console.trace(err);
 
                 context.error = 'Save failed.';
 
@@ -133,7 +133,7 @@ module.exports = {
 
             }, (err) => {
 
-                console.error(err);
+                console.trace(err);
 
                 db.get(request.params.collection).then(data => {
 
@@ -202,7 +202,7 @@ module.exports = {
                             role: request.body.role
                         };
 
-                        db.put('users', user, request.body.name).then(success => {
+                        db.put('users', user, request.body.email).then(success => {
 
                             context.saved = success;
 
@@ -213,7 +213,7 @@ module.exports = {
 
             }, err => {
 
-                console.error(err);
+                console.trace(err);
 
                 context.error = 'Save failed.';
 
@@ -240,16 +240,19 @@ module.exports = {
                 className: 'admin',
                 from: request.query.from || '/admin',
                 failed: false,
-                css: css,
-                tooManyAttempts: false
-            };
+                css: css
+            },
+            fails = request.sess ? request.sess.fails || 0 : 0;
+
+        if (fails >= 2) {
+            context.multipleAttempts = true;
+        }
+
+        if (fails >= 5) {
+            context.tooManyAttempts = true;
+        }
 
         function fail() {
-            let fails = request.sess.fails || 0;
-            console.log(fails);
-            if (fails === 5) {
-                context.tooManyAttempts = true;
-            }
             context.failed = true;
             request.session.save(request.cookies.id, fails + 1, 'fails');
             csrf.makeToken(request).then((headers, token) => {
@@ -263,7 +266,7 @@ module.exports = {
 
             crash.attempt(() => {
 
-                let user = request.body.username,
+                let user = request.body.email,
                     pass = request.body.password;
 
                 db.get('users').then(users => {
@@ -275,7 +278,7 @@ module.exports = {
                             if (success) {
 
                                 request.session.save(request.cookies.id, {
-                                    name: user,
+                                    email: user,
                                     role: users[user].role,
                                     token: request.sess.token,
                                     expires: request.sess.expires
@@ -295,7 +298,7 @@ module.exports = {
             // Something went wrong.
             }, err => {
 
-                console.error(err);
+                console.trace(err);
 
                 fail();
             });

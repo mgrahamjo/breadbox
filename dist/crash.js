@@ -15,7 +15,7 @@ function handle(err) {
 
     var errorData = {
       status: status,
-      stack: err.stack
+      stack: err.stack || err
     };
 
     if (!die && global.res) {

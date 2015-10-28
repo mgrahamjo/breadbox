@@ -257,7 +257,7 @@ module.exports = {
             request.session.save(request.cookies.id, fails + 1, 'fails');
             csrf.makeToken(request).then((headers, token) => {
                 context.token = token;
-                response.resolve(context, undefined, headers);
+                response.resolve(context, request.settings.loginPage, headers);
             });
         }
 
@@ -307,7 +307,7 @@ module.exports = {
 
             csrf.makeToken(request).then((headers, token) => {
                 context.token = token;
-                response.resolve(context, undefined, headers);
+                response.resolve(context, request.settings.loginPage, headers);
             });
         }
     }, 
@@ -320,11 +320,10 @@ module.exports = {
             className: 'admin', 
             loginPage: request.settings.loginPage,
             css: css
-        }, undefined, { 'Set-Cookie': 'id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT' });
+        }, request.settings.logoutPage, { 'Set-Cookie': 'id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT' });
     },
 
     '/error': function(response, error) {
-
         response.resolve({
             error: error,
             css: css

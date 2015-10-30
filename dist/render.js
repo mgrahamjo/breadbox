@@ -1,6 +1,7 @@
 'use strict';
 
-var read = require('fs').readFile,
+var fs = require('fs'),
+    read = fs.readFile,
     vm = require('vm'),
     path = require('path'),
     promise = require('./promise'),
@@ -279,26 +280,35 @@ function render(filepath, request, controller) {
             filepath = customPath;
         }
 
-        // get template. read = fs.readFile
-        read(filepath, { encoding: 'utf8' }, function (err, template) {
+        if (filepath.match(/\.html$/) === null) {
+            filepath += '.html';
+        }
 
-            crash.handle(err).then(function () {
+        fs.exists(filepath, function (exists) {
+            if (!exists) {
+                filepath = path.join(__dirname, filepath.replace(basePath, '../'));
+            }
+            // get template. read = fs.readFile
+            read(filepath, { encoding: 'utf8' }, function (err, template) {
 
-                var admin = false;
-                // Figure out whether this is a breadbox view or a custom view.
-                if (filepath.indexOf(basePath + 'views/') === -1) {
-                    admin = true;
-                }
-                // Now that we have everything we need, we can interpolate
-                // the template and put together the response.
-                // First, lets get any included partials so we have the full template.
-                parseIncludes(template, admin, function (fullTemplate) {
+                crash.handle(err).then(function () {
 
-                    var parsed = parse(fullTemplate, context);
-
-                    if (parsed) {
-                        response.resolve(parsed, headers);
+                    var admin = false;
+                    // Figure out whether this is a breadbox view or a custom view.
+                    if (filepath.indexOf(basePath + 'views/') === -1) {
+                        admin = true;
                     }
+                    // Now that we have everything we need, we can interpolate
+                    // the template and put together the response.
+                    // First, lets get any included partials so we have the full template.
+                    parseIncludes(template, admin, function (fullTemplate) {
+
+                        var parsed = parse(fullTemplate, context);
+
+                        if (parsed) {
+                            response.resolve(parsed, headers);
+                        }
+                    });
                 });
             });
         });

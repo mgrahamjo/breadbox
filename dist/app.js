@@ -61,7 +61,7 @@ crash = require('./crash');
 // Before crashing, save current sessions.
 process.on('uncaughtException', function (err) {
   fs.writeFile(basePath + 'models/session-dump.json', JSON.stringify(session.all()), function () {
-    console.log(err.stack);
+    console.error(err.stack);
     process.exit(1);
   });
 });

@@ -1,12 +1,12 @@
 {
   "name": "breadbox",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.0.1",
+  "description": "A Node MVC framework that does more with less.",
   "main": "dist/app.js",
   "scripts": {
     "test": "grunt"
   },
-  "author": "mgrahamjo",
+  "author": "Mike Johnson",
   "license": "ISC",
   "devDependencies": {
     "grunt": "^0.4.5",

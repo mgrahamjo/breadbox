@@ -1,24 +1,24 @@
 # Breadbox
 
-A Node JS MVC framework that priortizes simplicity. Currently in development. 
+Breadbox is still in development. 
 
 ## Hello World
 
-```
+```javascript
 // index.js
 
 var breadbox = require('breadbox');
 
 breadbox.init({
     controllers: {
-        '/index': function(response) {
+        '/index': response => {
             response.resolve({ person: "World" });
         }
     }
 });
 ```
 
-```
+```html
 <!-- index.html -->
 
 <h1>Hello, {{person}}!</h1>

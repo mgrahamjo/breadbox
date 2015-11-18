@@ -4,7 +4,6 @@ var db = require('./db'),
     fs = require('fs'),
     bcrypt = require('bcrypt-nodejs'),
     path = require('path'),
-    crash = require('./crash'),
     csrf = require('./csrf'),
     thisDir = path.join(__dirname, '..'),
     parentDir = path.join(__dirname, '../../..'),
@@ -23,7 +22,7 @@ module.exports = {
         // POST
         if (request.body) {
 
-            crash.attempt(function () {
+            global.attempt(function () {
 
                 bcrypt.genSalt(10, function (err, salt) {
 
@@ -117,7 +116,7 @@ module.exports = {
 
         if (request.body) {
 
-            crash.attempt(function () {
+            global.attempt(function () {
 
                 context.json = JSON.parse(request.body.json);
 
@@ -187,7 +186,7 @@ module.exports = {
 
         if (request.body) {
 
-            crash.attempt(function () {
+            global.attempt(function () {
 
                 bcrypt.genSalt(10, function (err, salt) {
 
@@ -258,7 +257,7 @@ module.exports = {
         // If this is a post request, then let's try to log in.
         if (request.body) {
 
-            crash.attempt(function () {
+            global.attempt(function () {
 
                 var user = request.body.email,
                     pass = request.body.password;

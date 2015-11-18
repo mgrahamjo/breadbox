@@ -1,7 +1,6 @@
 'use strict';
 
 var crypto = require('crypto'),
-    crash = require('./crash'),
     promise = require('./promise');
 
 function freshExpiration() {
@@ -35,7 +34,7 @@ module.exports = {
 
 			crypto.randomBytes(32, function (err, rand) {
 
-				crash.handle(err).then(function () {
+				global.handle(err).then(function () {
 
 					rand = rand.toString('hex');
 

@@ -1,65 +1,55 @@
 'use strict';
 
-var promise = require('./promise');
+var callback = undefined;
 
 function handle(err) {
   var status = arguments[1] === undefined ? 500 : arguments[1];
   var headers = arguments[2] === undefined ? { 'Content-Type': 'text/html' } : arguments[2];
   var die = arguments[3] === undefined ? false : arguments[3];
 
-  var result = promise();
+  return new Promise(function (resolve) {
 
-  if (err) {
+    if (err) {
 
-    console.trace(err);
+      if (!die && callback) {
 
-    var errorData = {
-      status: status,
-      stack: err.stack || err
-    };
+        callback(err, status, headers);
+      } else {
 
-    if (!die && global.res) {
-
-      require('./render')(__dirname.replace('/dist', '/views/error.html'), errorData, require('./routes')['/error']).then(function (template) {
-
-        global.res.writeHead(status, headers);
-
-        global.res.end(template);
-      });
+        console.trace(err);
+        process.exit(1);
+      }
     } else {
 
-      process.exit(1);
+      resolve();
     }
-  } else {
-
-    result.resolve();
-  }
-
-  return result;
+  });
 }
 
 function attempt(success, fail) {
 
-  var result = promise();
+  return new Promise(function (resolve) {
 
-  try {
+    try {
 
-    result.resolve(success());
-  } catch (err) {
+      resolve(success());
+    } catch (err) {
 
-    if (fail) {
+      if (fail) {
 
-      fail(err);
-    } else {
+        fail(err);
+      } else {
 
-      handle(err);
+        handle(err);
+      }
     }
-  }
-
-  return result;
+  });
 }
 
-module.exports = {
-  handle: handle,
-  attempt: attempt
+module.exports = function (fn) {
+  callback = fn;
+  return {
+    handle: handle,
+    attempt: attempt
+  };
 };

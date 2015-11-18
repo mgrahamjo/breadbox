@@ -5,7 +5,6 @@ var promise = require('./promise'),
     vm = require('vm'),
     htmlEscape = require('./htmlEscape'),
     path = require('path'),
-    crash = require('./crash'),
     parentDir = path.join(__dirname, '../..').split('/').pop(),
     modelPath = __dirname.replace(parentDir + '/breadbox/dist', 'models/');
 
@@ -27,7 +26,7 @@ function save(path, data, response) {
 
     fs.writeFile(modelPath + path + '.json', JSON.stringify(data), function (err) {
 
-        crash.handle(err).then(function () {
+        global.handle(err).then(function () {
             response.resolve(data);
         });
     });
@@ -49,9 +48,9 @@ function get(path, internal) {
 
                 if (data) {
 
-                    crash.handle(err).then(function () {
+                    global.handle(err).then(function () {
 
-                        crash.attempt(function () {
+                        global.attempt(function () {
                             response.resolve(JSON.parse(data));
                         });
                     });
@@ -151,7 +150,7 @@ function drop(path, key) {
 
                 fs.unlink(modelPath + path + '.json', function (err) {
 
-                    crash.handle(err).then(function () {
+                    global.handle(err).then(function () {
                         response.resolve();
                     });
                 });

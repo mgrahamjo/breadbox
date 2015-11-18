@@ -56,7 +56,21 @@ mime = {
 },
 
 // Awesome error interceptor
-crash = require('./crash');
+crash = require('./crash')(function (error, status) {
+
+  var errorData = {
+    status: status,
+    stack: error.stack || error
+  };
+
+  getTemplate(__dirname.replace('/dist', '/views/error.html'), errorData, appRoutes['/error']);
+});
+
+var response = undefined;
+
+global.handle = crash.handle;
+
+global.attempt = crash.attempt;
 
 // Before crashing, save current sessions.
 process.on('uncaughtException', function (err) {
@@ -167,8 +181,8 @@ function redirect(location) {
 
   console.log('redirecting to ' + location);
   headers.Location = location;
-  global.res.writeHead(status, mergeHeaders(headers));
-  global.res.end();
+  response.writeHead(status, mergeHeaders(headers));
+  response.end();
 }
 
 function isAuthenticated(id) {
@@ -189,9 +203,9 @@ function getTemplate(filepath, request, controller) {
 
     var status = headers.status;
 
-    global.res.writeHead(status || 200, mergeHeaders(headers));
+    response.writeHead(status || 200, mergeHeaders(headers));
 
-    global.res.end(template);
+    response.end(template);
   });
 }
 
@@ -226,8 +240,6 @@ function init() {
   var urls = sortRoutes(settings.controllers, appRoutes);
 
   http.createServer(function (req, res) {
-
-    global.res = res;
 
     var
     // root directory of app
@@ -268,6 +280,8 @@ function init() {
 
     // the request object we will make available to controllers
     request = undefined;
+
+    response = res;
 
     // If this is a template and it isn't a static URL...
     if (isView && urls['static'].indexOf(relPath) === -1) {

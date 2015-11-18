@@ -1,6 +1,6 @@
 {
   "name": "breadbox",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A Node MVC framework that does more with less.",
   "main": "dist/app.js",
   "scripts": {

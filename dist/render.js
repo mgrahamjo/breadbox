@@ -5,7 +5,6 @@ var fs = require('fs'),
     vm = require('vm'),
     path = require('path'),
     promise = require('./promise'),
-    crash = require('./crash'),
     htmlEscape = require('./htmlEscape'),
     includeRegx = /{{\s*?include\s(\S*?)\s*?}}/i,
     varRegx = /{{([\s\S]*?)}}/,
@@ -152,7 +151,7 @@ function parseIncludes(template, admin, callback) {
 
         read(viewPath + path + '.html', { encoding: 'utf8' }, function (err, html) {
 
-            crash.handle(err).then(function () {
+            global.handle(err).then(function () {
 
                 parseIncludes(template.replace(raw, html), admin, callback);
             });
@@ -291,7 +290,7 @@ function render(filepath, request, controller) {
             // get template. read = fs.readFile
             read(filepath, { encoding: 'utf8' }, function (err, template) {
 
-                crash.handle(err).then(function () {
+                global.handle(err).then(function () {
 
                     var admin = false;
                     // Figure out whether this is a breadbox view or a custom view.

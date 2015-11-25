@@ -1,13 +1,13 @@
 'use strict';
 
-var db = require('./db'),
-    fs = require('fs'),
+var fs = require('fs'),
     bcrypt = require('bcrypt-nodejs'),
     path = require('path'),
     csrf = require('./csrf'),
     thisDir = path.join(__dirname, '..'),
     parentDir = path.join(__dirname, '../../..'),
-    css = path.join(__dirname, '../..').split(path.sep).pop() + '/breadbox/css';
+    css = path.join(__dirname, '../..').split(path.sep).pop() + '/breadbox/css',
+    db = global.breadbox.db;
 
 module.exports = {
 

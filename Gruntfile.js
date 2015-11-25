@@ -2,7 +2,7 @@
 
 module.exports = function(grunt) {
 
-  var jsFiles = ['data/*.js', 'lib/*.js', '*.js'];
+  const jsFiles = ['data/*.js', 'lib/*.js', '*.js'];
 
   grunt.initConfig({
 
@@ -21,13 +21,11 @@ module.exports = function(grunt) {
       dist: {
         files: {
           'dist/app.js': 'lib/app.js',
-          'dist/db.js': 'lib/db.js',
           'dist/htmlEscape.js': 'lib/htmlEscape.js',
           'dist/promise.js': 'lib/promise.js',
           'dist/render.js': 'lib/render.js',
           'dist/session.js': 'lib/session.js',
           'dist/routes.js': 'routes.js',
-          'dist/crash.js': 'lib/crash.js',
           'dist/csrf.js': 'lib/csrf.js'
         }
       }
@@ -36,7 +34,7 @@ module.exports = function(grunt) {
     watch: {
       files: jsFiles,
       tasks: ['babel', 'jshint:all']
-    },
+    }
 
   });
 

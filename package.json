@@ -16,6 +16,9 @@
   },
   "dependencies": {
     "bcrypt-nodejs": "0.0.3",
-    "formidable": "^1.0.17"
+    "blooper": "0.0.2",
+    "formidable": "^1.0.17",
+    "jdrop": "0.0.1",
+    "manila": "^1.0.2"
   }
 }

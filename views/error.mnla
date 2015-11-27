@@ -9,13 +9,13 @@
 
 <div class="header">
 
-	<h1>Uh oh. That's a {{error.status}} error.</h1>
+	<h1>Uh oh. That's a {{status}} error.</h1>
 
 </div>
 
 <p></p><p></p>
 
-<p class="center">{{error.stack|safe}}</p>
+<p class="center">{{stack|safe}}</p>
 
 </body>
 

@@ -1,7 +1,8 @@
 'use strict';
 
 var crypto = require('crypto'),
-    promise = require('./promise');
+    handle = global.breadbox.handle,
+    promise = global.breadbox.promise;
 
 function freshExpiration() {
 
@@ -19,40 +20,39 @@ module.exports = {
 
 	makeToken: function makeToken(request) {
 
-		var result = promise();
+		return promise(function (resolve) {
 
-		if (request.sess && request.sess.token) {
+			if (request.sess && request.sess.token) {
 
-			var freshDate = freshExpiration();
+				var freshDate = freshExpiration();
 
-			if (request.sess.email) {
-				request.session.save(request.cookies.id, freshDate, 'expires');
-			}
+				if (request.sess.email) {
+					request.session.save(request.cookies.id, freshDate, 'expires');
+				}
 
-			result.resolve(freshHeader(request.cookies.id, freshDate), request.sess.token);
-		} else {
+				resolve(freshHeader(request.cookies.id, freshDate), request.sess.token);
+			} else {
 
-			crypto.randomBytes(32, function (err, rand) {
+				crypto.randomBytes(32, function (err, rand) {
 
-				global.handle(err).then(function () {
+					handle(err).then(function () {
 
-					rand = rand.toString('hex');
+						rand = rand.toString('hex');
 
-					var mid = Math.floor(rand.length / 2),
-					    id = rand.substring(0, mid),
-					    token = rand.substring(mid),
-					    expires = freshExpiration();
+						var mid = Math.floor(rand.length / 2),
+						    id = rand.substring(0, mid),
+						    token = rand.substring(mid),
+						    expires = freshExpiration();
 
-					request.session.save(id, {
-						token: token,
-						expires: expires
+						request.session.save(id, {
+							token: token,
+							expires: expires
+						});
+
+						resolve(freshHeader(id, expires), token);
 					});
-
-					result.resolve(freshHeader(id, expires), token);
 				});
-			});
-		}
-
-		return result;
+			}
+		});
 	}
 };

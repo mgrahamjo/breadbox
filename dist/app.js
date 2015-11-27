@@ -16,14 +16,11 @@ url = require('url'),
 // For other kinds of url parsing
 path = require('path'),
 
-// For managing tokens
-csrf = require('./csrf'),
-
 // Our function that returns an interpolated template
 manila = require('manila')(),
 
 // Our promise implementation
-promise = require('./promise'),
+treaty = require('treaty'),
 
 // Session management
 session = require('./session'),
@@ -55,7 +52,7 @@ mime = {
 // Awesome error interceptor
 initBlooper = require('blooper');
 
-module.exports = function (config) {
+function breadbox(config) {
 
   // Parse settings
   var settings = {};
@@ -66,38 +63,43 @@ module.exports = function (config) {
   settings.cacheLength = config.cacheLength || 2419200; // 1 month cache
   settings.sessionLength = config.sessionLength || 600000; // 10 minute session
   settings.dataPath = config.dataPath || 'data';
-  global.settings = settings;
 
   // Set up error handling
-  var blooper = initBlooper(function (error, status) {
+  var response = undefined;
+
+  var blooper = initBlooper(function (error) {
+    var status = arguments[1] === undefined ? 500 : arguments[1];
+
     var errorData = {
       status: status,
       stack: error.stack || error
     };
     console.error(error);
-    getTemplate(__dirname.replace('/dist', '/views/error.html'), errorData, function (response, error) {
-      response.resolve({
-        error: error
-      });
+    manila(__dirname.replace('/dist', '/views/error.mnla'), errorData, function (err, template) {
+      response.writeHead(status, { 'Content-Type': 'text/html; charset=UTF-8' });
+      response.end(template);
     });
   });
 
-  var response = undefined;
-
+  // JSON file store
   var db = jdrop({
     path: settings.dataPath,
     autocatch: blooper.handle
   });
 
+  // Public API
   global.breadbox = {
-    init: init,
     db: db,
-    promise: promise,
+    promise: treaty,
     handle: blooper.handle,
     attempt: blooper.attempt,
-    csrf: csrf
+    settings: settings,
+    init: init
   };
+  // CSRF depends on global.breadbox
+  global.breadbox.csrf = require('./csrf');
 
+  // appRoutes depends on global.breadbox
   var appRoutes = require('./routes');
 
   // Before crashing, save current sessions.
@@ -182,7 +184,8 @@ module.exports = function (config) {
     };
   }
 
-  function mergeHeaders(headers) {
+  function mergeHeaders() {
+    var headers = arguments[0] === undefined ? {} : arguments[0];
 
     delete headers.status;
 
@@ -222,11 +225,9 @@ module.exports = function (config) {
 
   function getContext(request, controller) {
 
-    var context = promise();
-
-    controller(context, request);
-
-    return context;
+    return treaty(function (resolve) {
+      controller(resolve, request);
+    });
   }
 
   // getTemplate passes the name of the route we want,
@@ -239,7 +240,7 @@ module.exports = function (config) {
       var headers = arguments[2] === undefined ? {} : arguments[2];
 
       manila(customPath || filepath, context, function (err, template) {
-        console.log(err);
+
         blooper.handle(err).then(function () {
 
           var status = headers.status;
@@ -472,5 +473,16 @@ module.exports = function (config) {
     console.log('Server running at http://localhost:' + (settings.port || 1337));
   }
 
+  init();
+
+  breadbox.db = db;
+  breadbox.promise = treaty;
+  breadbox.handle = blooper.handle;
+  breadbox.attempt = blooper.attempt;
+  breadbox.settings = settings;
+  breadbox.csrf = global.breadbox.csrf;
+
   return global.breadbox;
-};
+}
+
+module.exports = breadbox;

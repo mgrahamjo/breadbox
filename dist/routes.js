@@ -7,11 +7,12 @@ var fs = require('fs'),
     thisDir = path.join(__dirname, '..'),
     parentDir = path.join(__dirname, '../../..'),
     css = path.join(__dirname, '../..').split(path.sep).pop() + '/breadbox/css',
-    db = global.breadbox.db;
+    db = global.breadbox.db,
+    attempt = global.breadbox.attempt;
 
 module.exports = {
 
-    '/index': function index(response, request) {
+    '/index': function index(resolve, request) {
 
         var context = {
             parent: parentDir,
@@ -22,7 +23,7 @@ module.exports = {
         // POST
         if (request.body) {
 
-            global.attempt(function () {
+            attempt(function () {
 
                 bcrypt.genSalt(10, function (err, salt) {
 
@@ -41,7 +42,7 @@ module.exports = {
 
                             context.saved = success;
 
-                            response.resolve(context, parentDir + '/views/breadbox-setup.html');
+                            resolve(context, parentDir + '/views/breadbox-setup.mnla');
                         });
                     });
                 });
@@ -51,19 +52,19 @@ module.exports = {
 
                 context.error = 'Save failed.';
 
-                response.resolve(context, parentDir + '/views/breadbox-setup.html');
+                resolve(context, parentDir + '/views/breadbox-setup.mnla');
             });
 
             // GET
         } else {
 
-            fs.exists(parentDir + '/views/breadbox-setup.html', function (exists) {
+            fs.exists(parentDir + '/views/breadbox-setup.mnla', function (exists) {
 
                 if (!exists) {
 
-                    fs.readFile(thisDir + '/views/breadbox-setup.html', function (err, data) {
+                    fs.readFile(thisDir + '/views/breadbox-setup.mnla', function (err, data) {
 
-                        fs.writeFile(parentDir + '/views/breadbox-setup.html', data);
+                        fs.writeFile(parentDir + '/views/breadbox-setup.mnla', data);
                     });
                 }
 
@@ -74,13 +75,13 @@ module.exports = {
                         context.token = request.sess.token;
                     }
 
-                    response.resolve(context, exists ? parentDir + '/views/breadbox-setup.html' : thisDir + '/views/breadbox-setup.html');
+                    resolve(context, exists ? parentDir + '/views/breadbox-setup.mnla' : thisDir + '/views/breadbox-setup.mnla');
                 });
             });
         }
     },
 
-    '/admin': function admin(response, request) {
+    '/admin': function admin(resolve, request) {
 
         var collections = [];
 
@@ -93,7 +94,7 @@ module.exports = {
                     collections.push(file.replace('.json', ''));
 
                     if (index === files.length - 1) {
-                        response.resolve({
+                        resolve({
                             collections: collections,
                             className: 'admin',
                             userRole: request.sess.role,
@@ -105,7 +106,7 @@ module.exports = {
         });
     },
 
-    '/admin/{{collection}}': function adminCollection(response, request) {
+    '/admin/{{collection}}': function adminCollection(resolve, request) {
 
         var context = {
             collection: request.params.collection,
@@ -116,7 +117,7 @@ module.exports = {
 
         if (request.body) {
 
-            global.attempt(function () {
+            attempt(function () {
 
                 context.json = JSON.parse(request.body.json);
 
@@ -126,7 +127,7 @@ module.exports = {
 
                     context.saved = true;
 
-                    response.resolve(context, thisDir + '/views/collection.html');
+                    resolve(context, thisDir + '/views/collection.mnla');
                 });
             }, function (err) {
 
@@ -138,7 +139,7 @@ module.exports = {
 
                     context.error = 'Save failed, probably due to malformed JSON.';
 
-                    response.resolve(context, thisDir + '/views/collection.html');
+                    resolve(context, thisDir + '/views/collection.mnla');
                 });
             });
         } else {
@@ -147,12 +148,12 @@ module.exports = {
 
                 context.json = JSON.stringify(data, null, 4);
 
-                response.resolve(context, thisDir + '/views/collection.html');
+                resolve(context, thisDir + '/views/collection.mnla');
             });
         }
     },
 
-    '/admin/new/{{collection}}': function adminNewCollection(response, request) {
+    '/admin/new/{{collection}}': function adminNewCollection(resolve, request) {
 
         var context = {
             collection: request.params.collection,
@@ -170,13 +171,13 @@ module.exports = {
 
                 db.put(request.params.collection, {}).then(function () {
 
-                    response.resolve(context, thisDir + '/views/collection.html');
+                    resolve(context, thisDir + '/views/collection.mnla');
                 });
             }
         });
     },
 
-    '/admin/new-user': function adminNewUser(response, request) {
+    '/admin/new-user': function adminNewUser(resolve, request) {
 
         var context = {
             className: 'admin',
@@ -186,7 +187,7 @@ module.exports = {
 
         if (request.body) {
 
-            global.attempt(function () {
+            attempt(function () {
 
                 bcrypt.genSalt(10, function (err, salt) {
 
@@ -201,7 +202,7 @@ module.exports = {
 
                             context.saved = success;
 
-                            response.resolve(context, thisDir + '/views/newuser.html');
+                            resolve(context, thisDir + '/views/newuser.mnla');
                         });
                     });
                 });
@@ -211,15 +212,15 @@ module.exports = {
 
                 context.error = 'Save failed.';
 
-                response.resolve(context, thisDir + '/views/newuser.html');
+                resolve(context, thisDir + '/views/newuser.mnla');
             });
         } else {
 
-            response.resolve(context, thisDir + '/views/newuser.html');
+            resolve(context, thisDir + '/views/newuser.mnla');
         }
     },
 
-    '/admin/delete/{{collection}}': function adminDeleteCollection(response, request) {
+    '/admin/delete/{{collection}}': function adminDeleteCollection(resolve, request) {
 
         db.drop(request.params.collection).then(function () {
 
@@ -227,7 +228,7 @@ module.exports = {
         });
     },
 
-    '/login': function login(response, request) {
+    '/login': function login(resolve, request) {
 
         var context = {
             className: 'admin',
@@ -250,14 +251,14 @@ module.exports = {
             request.session.save(request.cookies.id, fails + 1, 'fails');
             csrf.makeToken(request).then(function (headers, token) {
                 context.token = token;
-                response.resolve(context, request.settings.loginPage, headers);
+                resolve(context, request.settings.loginPage, headers);
             });
         }
 
         // If this is a post request, then let's try to log in.
         if (request.body) {
 
-            global.attempt(function () {
+            attempt(function () {
 
                 var user = request.body.email,
                     pass = request.body.password;
@@ -300,24 +301,24 @@ module.exports = {
 
             csrf.makeToken(request).then(function (headers, token) {
                 context.token = token;
-                response.resolve(context, request.settings.loginPage, headers);
+                resolve(context, thisDir + '/views/login.mnla', headers);
             });
         }
     },
 
-    '/logout': function logout(response, request) {
+    '/logout': function logout(resolve, request) {
 
         request.session.end(request.cookies.id);
 
-        response.resolve({
+        resolve({
             className: 'admin',
             loginPage: request.settings.loginPage,
             css: css
         }, request.settings.logoutPage, { 'Set-Cookie': 'id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT' });
     },
 
-    '/error': function error(response, _error) {
-        response.resolve({
+    '/error': function error(resolve, _error) {
+        resolve({
             error: _error,
             css: css
         });

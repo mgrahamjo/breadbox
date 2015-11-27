@@ -1,7 +1,6 @@
 'use strict';
 
 // This is an in-memory session store.
-// Not a scalable solution.
 
 var sessions = {};
 

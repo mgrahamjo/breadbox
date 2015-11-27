@@ -21,9 +21,6 @@ module.exports = function(grunt) {
       dist: {
         files: {
           'dist/app.js': 'lib/app.js',
-          'dist/htmlEscape.js': 'lib/htmlEscape.js',
-          'dist/promise.js': 'lib/promise.js',
-          'dist/render.js': 'lib/render.js',
           'dist/session.js': 'lib/session.js',
           'dist/routes.js': 'routes.js',
           'dist/csrf.js': 'lib/csrf.js'

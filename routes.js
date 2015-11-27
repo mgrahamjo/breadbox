@@ -7,11 +7,12 @@ const fs = require('fs'),
     thisDir = path.join(__dirname, '..'),
     parentDir = path.join(__dirname, '../../..'),
     css = path.join(__dirname, '../..').split(path.sep).pop() + '/breadbox/css',
-    db = global.breadbox.db;
+    db = global.breadbox.db,
+    attempt = global.breadbox.attempt;
 
 module.exports = {
 
-    '/index': function(response, request) {
+    '/index': function(resolve, request) {
 
         let context = {
             parent: parentDir,
@@ -22,7 +23,7 @@ module.exports = {
         // POST
         if (request.body) {
 
-            global.attempt(() => {
+            attempt(() => {
 
                 bcrypt.genSalt(10, (err, salt) => {
 
@@ -41,7 +42,7 @@ module.exports = {
 
                             context.saved = success;
 
-                            response.resolve(context, parentDir + '/views/breadbox-setup.html');
+                            resolve(context, parentDir + '/views/breadbox-setup.mnla');
                         });
                     });
                 });
@@ -52,19 +53,19 @@ module.exports = {
 
                 context.error = 'Save failed.';
 
-                response.resolve(context, parentDir + '/views/breadbox-setup.html');
+                resolve(context, parentDir + '/views/breadbox-setup.mnla');
             });
 
         // GET
         } else {
 
-            fs.exists(parentDir + '/views/breadbox-setup.html', exists => {
+            fs.exists(parentDir + '/views/breadbox-setup.mnla', exists => {
 
                 if (!exists) {
 
-                    fs.readFile(thisDir + '/views/breadbox-setup.html', (err, data) => {
+                    fs.readFile(thisDir + '/views/breadbox-setup.mnla', (err, data) => {
 
-                        fs.writeFile(parentDir + '/views/breadbox-setup.html', data);
+                        fs.writeFile(parentDir + '/views/breadbox-setup.mnla', data);
                     });
                 }
 
@@ -75,13 +76,13 @@ module.exports = {
                         context.token = request.sess.token;
                     }
 
-                    response.resolve(context, exists ? parentDir + '/views/breadbox-setup.html' : thisDir + '/views/breadbox-setup.html');
+                    resolve(context, exists ? parentDir + '/views/breadbox-setup.mnla' : thisDir + '/views/breadbox-setup.mnla');
                 });
             });
         }
     },
 
-    '/admin': function(response, request) {
+    '/admin': function(resolve, request) {
 
         let collections = [];
 
@@ -94,7 +95,7 @@ module.exports = {
                     collections.push(file.replace('.json', ''));
 
                     if (index === files.length - 1) {
-                        response.resolve({
+                        resolve({
                             collections: collections,
                             className: 'admin',
                             userRole: request.sess.role,
@@ -106,7 +107,7 @@ module.exports = {
         });
     },
 
-    '/admin/{{collection}}': function(response, request) {
+    '/admin/{{collection}}': function(resolve, request) {
 
         let context = {
             collection: request.params.collection,
@@ -117,7 +118,7 @@ module.exports = {
 
         if (request.body) {
 
-            global.attempt(() => {
+            attempt(() => {
 
                 context.json = JSON.parse(request.body.json);
 
@@ -127,7 +128,7 @@ module.exports = {
 
                     context.saved = true;
 
-                    response.resolve(context, thisDir + '/views/collection.html');
+                    resolve(context, thisDir + '/views/collection.mnla');
                 });
 
             }, err => {
@@ -140,7 +141,7 @@ module.exports = {
 
                     context.error = 'Save failed, probably due to malformed JSON.';
 
-                    response.resolve(context, thisDir + '/views/collection.html');
+                    resolve(context, thisDir + '/views/collection.mnla');
                 });
             });
 
@@ -150,12 +151,12 @@ module.exports = {
 
                 context.json = JSON.stringify(data, null, 4);
 
-                response.resolve(context, thisDir + '/views/collection.html');
+                resolve(context, thisDir + '/views/collection.mnla');
             });
         }
     },
 
-    '/admin/new/{{collection}}': function(response, request) {
+    '/admin/new/{{collection}}': function(resolve, request) {
 
         let context = {
             collection: request.params.collection,
@@ -174,13 +175,13 @@ module.exports = {
 
                 db.put(request.params.collection, {}).then(() => {
 
-                    response.resolve(context, thisDir + '/views/collection.html');
+                    resolve(context, thisDir + '/views/collection.mnla');
                 });
             }
         });
     },
 
-    '/admin/new-user': function(response, request) {
+    '/admin/new-user': function(resolve, request) {
 
         let context = {
             className: 'admin',
@@ -190,7 +191,7 @@ module.exports = {
 
         if (request.body) {
 
-            global.attempt(() => {
+            attempt(() => {
 
                 bcrypt.genSalt(10, (err, salt) => {
 
@@ -205,7 +206,7 @@ module.exports = {
 
                             context.saved = success;
 
-                            response.resolve(context, thisDir + '/views/newuser.html');
+                            resolve(context, thisDir + '/views/newuser.mnla');
                         });
                     });
                 });
@@ -216,16 +217,16 @@ module.exports = {
 
                 context.error = 'Save failed.';
 
-                response.resolve(context, thisDir + '/views/newuser.html');
+                resolve(context, thisDir + '/views/newuser.mnla');
             });
 
         } else {
 
-            response.resolve(context, thisDir + '/views/newuser.html');
+            resolve(context, thisDir + '/views/newuser.mnla');
         }        
     },
 
-    '/admin/delete/{{collection}}': function(response, request) {
+    '/admin/delete/{{collection}}': function(resolve, request) {
 
         db.drop(request.params.collection).then(() => {
 
@@ -233,7 +234,7 @@ module.exports = {
         });
     },
 
-    '/login': function(response, request) {
+    '/login': function(resolve, request) {
 
         let context = {
                 className: 'admin',
@@ -256,14 +257,14 @@ module.exports = {
             request.session.save(request.cookies.id, fails + 1, 'fails');
             csrf.makeToken(request).then((headers, token) => {
                 context.token = token;
-                response.resolve(context, request.settings.loginPage, headers);
+                resolve(context, request.settings.loginPage, headers);
             });
         }
 
         // If this is a post request, then let's try to log in.
         if (request.body) {
 
-            global.attempt(() => {
+            attempt(() => {
 
                 let user = request.body.email,
                     pass = request.body.password;
@@ -306,24 +307,24 @@ module.exports = {
 
             csrf.makeToken(request).then((headers, token) => {
                 context.token = token;
-                response.resolve(context, request.settings.loginPage, headers);
+                resolve(context, thisDir + '/views/login.mnla', headers);
             });
         }
     }, 
 
-    '/logout': function(response, request) {
+    '/logout': function(resolve, request) {
 
         request.session.end(request.cookies.id);
 
-        response.resolve({
+        resolve({
             className: 'admin', 
             loginPage: request.settings.loginPage,
             css: css
         }, request.settings.logoutPage, { 'Set-Cookie': 'id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT' });
     },
 
-    '/error': function(response, error) {
-        response.resolve({
+    '/error': function(resolve, error) {
+        resolve({
             error: error,
             css: css
         });

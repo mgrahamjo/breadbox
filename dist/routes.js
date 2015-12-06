@@ -58,37 +58,37 @@ module.exports = {
 
             // GET
         } else {
-            (function () {
+                (function () {
 
-                var breadboxSetupPath = path.join(parentDir, settings.viewsPath, 'breadbox-setup.mnla');
+                    var breadboxSetupPath = path.join(parentDir, settings.viewsPath, 'breadbox-setup.mnla');
 
-                fs.exists(breadboxSetupPath, function (exists) {
+                    fs.exists(breadboxSetupPath, function (exists) {
 
-                    if (!exists) {
+                        if (!exists) {
 
-                        fs.readFile(thisDir + '/views/breadbox-setup.mnla', function (err, data) {
+                            fs.readFile(thisDir + '/views/breadbox-setup.mnla', function (err, data) {
 
-                            fs.writeFile(breadboxSetupPath, data);
-                        });
-                    }
-
-                    db.get('users').then(function (users) {
-
-                        var customPath = exists ? breadboxSetupPath : thisDir + '/views/breadbox-setup.mnla';
-
-                        if (!users || Object.keys(users).length === 0) {
-                            context.noUsers = true;
-                            csrf.makeToken(request).then(function (headers, token) {
-                                context.token = token;
-                                resolve(context, customPath, headers);
+                                fs.writeFile(breadboxSetupPath, data);
                             });
-                        } else {
-                            resolve(context, customPath);
                         }
+
+                        db.get('users').then(function (users) {
+
+                            var customPath = exists ? breadboxSetupPath : thisDir + '/views/breadbox-setup.mnla';
+
+                            if (!users || Object.keys(users).length === 0) {
+                                context.noUsers = true;
+                                csrf.makeToken(request).then(function (headers, token) {
+                                    context.token = token;
+                                    resolve(context, customPath, headers);
+                                });
+                            } else {
+                                resolve(context, customPath);
+                            }
+                        });
                     });
-                });
-            })();
-        }
+                })();
+            }
     },
 
     '/admin': function admin(resolve, request) {
@@ -328,14 +328,14 @@ module.exports = {
                                     request.redirect(context.from);
                                     // Incorrect password
                                 } else {
-                                    fail();
-                                }
+                                        fail();
+                                    }
                             });
                         });
                         // User does not exist
                     } else {
-                        fail();
-                    }
+                            fail();
+                        }
                 });
                 // Something went wrong.
             }, function (err) {
@@ -347,11 +347,11 @@ module.exports = {
             // This is not a post request
         } else {
 
-            csrf.makeToken(request).then(function (headers, token) {
-                context.token = token;
-                resolve(context, settings.loginView, headers);
-            });
-        }
+                csrf.makeToken(request).then(function (headers, token) {
+                    context.token = token;
+                    resolve(context, settings.loginView, headers);
+                });
+            }
     },
 
     '/logout': function logout(resolve, request) {

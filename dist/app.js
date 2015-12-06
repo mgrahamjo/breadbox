@@ -56,7 +56,7 @@ function breadbox(config) {
 
   // Parse settings
   var settings = {};
-  settings.cacheHtml = config.cacheHtml === undefined ? true : config.cacheHtml;
+  settings.cacheHtml = config.cacheHtml;
   settings.controllers = config.controllers || {};
   settings.loginPage = config.loginPage || '/login';
   settings.logoutPage = config.logoutPage || '/logout';
@@ -77,7 +77,7 @@ function breadbox(config) {
   });
 
   var blooper = initBlooper(function (error) {
-    var status = arguments[1] === undefined ? 500 : arguments[1];
+    var status = arguments.length <= 1 || arguments[1] === undefined ? 500 : arguments[1];
 
     var errorData = {
       status: status,
@@ -114,7 +114,7 @@ function breadbox(config) {
   // Before crashing, save current sessions.
   process.on('uncaughtException', function (err) {
     fs.writeFile(basePath + 'models/session-dump.json', JSON.stringify(session.all()), function () {
-      console.trace(err);
+      console.trace(err.stack);
       process.exit(1);
     });
   });
@@ -164,7 +164,7 @@ function breadbox(config) {
 
             variableUrls.push({
               route: route,
-              regx: new RegExp('^' + route.split('|')[0].replace(varRegx, '([^/]+)') + '$')
+              regx: new RegExp('^' + route.split('|')[0].replace(varRegx, '([^\/]+)') + '$')
             });
           } else {
 
@@ -194,7 +194,7 @@ function breadbox(config) {
   }
 
   function mergeHeaders() {
-    var headers = arguments[0] === undefined ? {} : arguments[0];
+    var headers = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
     delete headers.status;
 
@@ -216,8 +216,8 @@ function breadbox(config) {
   }
 
   function redirect(location) {
-    var status = arguments[1] === undefined ? 302 : arguments[1];
-    var headers = arguments[2] === undefined ? {} : arguments[2];
+    var status = arguments.length <= 1 || arguments[1] === undefined ? 302 : arguments[1];
+    var headers = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
     console.log('redirecting to ' + location);
     headers.Location = location;
@@ -246,7 +246,7 @@ function breadbox(config) {
   function getTemplate(filepath, request, controller) {
 
     getContext(request, controller).then(function (context, customPath) {
-      var headers = arguments[2] === undefined ? {} : arguments[2];
+      var headers = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
       manila(customPath || filepath, context, function (err, template) {
 
@@ -449,8 +449,8 @@ function breadbox(config) {
             // If this is not a post request,
             // leave the request object as-is and render the template.
           } else {
-            getTemplate(filepath, request, controller);
-          }
+              getTemplate(filepath, request, controller);
+            }
         }
 
         // If this isn't an html request, send the file directly.
@@ -458,28 +458,28 @@ function breadbox(config) {
         // for non-html requests.
       } else {
 
-        fs.exists(filepath, function (exists) {
+          fs.exists(filepath, function (exists) {
 
-          if (exists) {
+            if (exists) {
 
-            fs.readFile(filepath, function (err, file) {
+              fs.readFile(filepath, function (err, file) {
 
-              blooper.handle(err).then(function () {
+                blooper.handle(err).then(function () {
 
-                res.writeHead(200, {
-                  'Content-Type': mime[extension],
-                  'Cache-Control': 'max-age=' + settings.cacheLength
+                  res.writeHead(200, {
+                    'Content-Type': mime[extension],
+                    'Cache-Control': 'max-age=' + settings.cacheLength
+                  });
+
+                  res.end(file);
                 });
-
-                res.end(file);
               });
-            });
-          } else {
+            } else {
 
-            blooper.handle('Asset not found: ' + filepath, 404);
-          }
-        });
-      }
+              blooper.handle('Asset not found: ' + filepath, 404);
+            }
+          });
+        }
     }).listen(settings.port || 1337);
 
     console.log('Server running at http://localhost:' + (settings.port || 1337));

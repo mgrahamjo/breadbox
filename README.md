@@ -1,18 +1,18 @@
 # Breadbox
 
-Breadbox is still in development. 
+Breadbox is an MVC framework for Node.js web apps. Breadbox favors functionality over flexibility, meaning you won't have to find and install middleware to make stuff work, but in some cases you can't plug in modules to replace core functionality.
 
 ## Hello World
 
 ```javascript
 // index.js
 
-var breadbox = require('breadbox');
+const breadbox = require('breadbox');
 
-breadbox.init({
+breadbox({
     controllers: {
-        '/index': response => {
-            response.resolve({ person: "World" });
+        '/index': resolve => {
+            resolve({ person: "World" });
         }
     }
 });

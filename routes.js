@@ -5,10 +5,13 @@ const fs = require('fs'),
     path = require('path'),
     csrf = require('./csrf'),
     thisDir = path.join(__dirname, '..'),
-    parentDir = path.join(__dirname, '../../..'),
+    parentDir = path.dirname(require.main.filename),
     css = path.join(__dirname, '../..').split(path.sep).pop() + '/breadbox/css',
     db = global.breadbox.db,
-    attempt = global.breadbox.attempt;
+    attempt = global.breadbox.attempt,
+    handle = global.breadbox.handle,
+    dataPath = path.join(parentDir, global.breadbox.settings.dataPath),
+    settings = global.breadbox.settings;
 
 module.exports = {
 
@@ -31,18 +34,16 @@ module.exports = {
                         
                         let user = {};
 
-                        user[request.body.name] = {
+                        user[request.body.email] = {
                             password: passHash,
                             role: request.body.role
                         };
-
-                        console.log(user);
 
                         db.put('users', user).then(success => {
 
                             context.saved = success;
 
-                            resolve(context, parentDir + '/views/breadbox-setup.mnla');
+                            resolve(context, path.join(parentDir, settings.viewsPath, 'breadbox-setup.mnla'));
                         });
                     });
                 });
@@ -53,30 +54,37 @@ module.exports = {
 
                 context.error = 'Save failed.';
 
-                resolve(context, parentDir + '/views/breadbox-setup.mnla');
+                resolve(context, path.join(parentDir, settings.viewsPath, 'breadbox-setup.mnla'));
             });
 
         // GET
         } else {
 
-            fs.exists(parentDir + '/views/breadbox-setup.mnla', exists => {
+            let breadboxSetupPath = path.join(parentDir, settings.viewsPath, 'breadbox-setup.mnla');
+
+            fs.exists(breadboxSetupPath, exists => {
 
                 if (!exists) {
 
                     fs.readFile(thisDir + '/views/breadbox-setup.mnla', (err, data) => {
 
-                        fs.writeFile(parentDir + '/views/breadbox-setup.mnla', data);
+                        fs.writeFile(breadboxSetupPath, data);
                     });
                 }
 
                 db.get('users').then(users => {
 
-                    if (!users) {
-                        context.noUsers = true;
-                        context.token = request.sess.token;
-                    }
+                    let customPath = exists ? breadboxSetupPath : thisDir + '/views/breadbox-setup.mnla';
 
-                    resolve(context, exists ? parentDir + '/views/breadbox-setup.mnla' : thisDir + '/views/breadbox-setup.mnla');
+                    if (!users || Object.keys(users).length === 0) {
+                        context.noUsers = true;
+                        csrf.makeToken(request).then((headers, token) => {
+                            context.token = token;
+                            resolve(context, customPath, headers);
+                        });
+                    } else {
+                        resolve(context, customPath);
+                    }
                 });
             });
         }
@@ -86,31 +94,64 @@ module.exports = {
 
         let collections = [];
 
-        fs.readdir(parentDir + '/models', (err, files) => {
+        function readDir(dir, outer) {
 
-            if (files) {
+            fs.readdir(dir, (err, files) => {
 
-                files.forEach((file, index) => {
+                handle(err).then(() => {
 
-                    collections.push(file.replace('.json', ''));
+                    if (files) {
 
-                    if (index === files.length - 1) {
-                        resolve({
-                            collections: collections,
-                            className: 'admin',
-                            userRole: request.sess.role,
-                            css: css
+                        files.forEach((file, index) => {
+
+                            let modelPath = path.join(dir, file);
+
+                            fs.lstat(modelPath, (err, stats) => {
+
+                                handle(err).then(() => {
+
+                                    if (stats.isDirectory()) {
+
+                                        readDir(modelPath);
+
+                                    } else {
+
+                                        let collection = path.relative(dataPath, modelPath).replace('.json', '');
+
+                                        collections.push({
+                                            name: collection,
+                                            path: collection.replace('/', '--')
+                                        });
+
+                                        if (outer === true && index === files.length - 1) {
+                                            resolve({
+                                                collections: collections,
+                                                className: 'admin',
+                                                userRole: request.sess.role,
+                                                css: css
+                                            });
+                                        }
+                                    }
+                                });
+                            });
                         });
                     }
                 });
-            }
-        });
+            });
+        }
+
+        readDir(dataPath, true);
+        
     },
 
     '/admin/{{collection}}': function(resolve, request) {
 
-        let context = {
-            collection: request.params.collection,
+        let collection = {
+            name: request.params.collection.replace('--', '/'),
+            path: request.params.collection
+        },
+        context = {
+            collection: collection,
             className: 'admin',
             token: request.sess.token,
             css: css
@@ -122,7 +163,7 @@ module.exports = {
 
                 context.json = JSON.parse(request.body.json);
 
-                db.put(request.params.collection, context.json).then(() => {
+                db.put(collection.name, context.json).then(() => {
 
                     context.json = JSON.stringify(context.json, null, 4);
 
@@ -135,7 +176,7 @@ module.exports = {
 
                 console.trace(err);
 
-                db.get(request.params.collection).then(data => {
+                db.get(collection.name).then(data => {
 
                     context.json = JSON.stringify(data, null, 4);
 
@@ -147,7 +188,7 @@ module.exports = {
 
         } else {
 
-            db.get(request.params.collection).then(data => {
+            db.get(collection.name).then(data => {
 
                 context.json = JSON.stringify(data, null, 4);
 
@@ -158,22 +199,26 @@ module.exports = {
 
     '/admin/new/{{collection}}': function(resolve, request) {
 
-        let context = {
-            collection: request.params.collection,
+        let collection = {
+            name: request.params.collection.replace('--', '/'),
+            path: request.params.collection
+        },
+        context = {
+            collection: collection,
             className: 'admin',
             token: request.sess.token,
             css: css
         };
 
-        fs.exists(parentDir + '/models/' + request.params.collection + '.json', exists => {
+        fs.exists(path.join(dataPath, collection.name, '.json'), exists => {
 
             if (exists) {
 
-                request.redirect('/admin/' + request.params.collection);
+                request.redirect('/admin/' + collection.path);
 
             } else {
 
-                db.put(request.params.collection, {}).then(() => {
+                db.put(collection.name, {}).then(() => {
 
                     resolve(context, thisDir + '/views/collection.mnla');
                 });
@@ -228,7 +273,7 @@ module.exports = {
 
     '/admin/delete/{{collection}}': function(resolve, request) {
 
-        db.drop(request.params.collection).then(() => {
+        db.del(request.params.collection.replace('--', '/')).then(() => {
 
             request.redirect('/admin');
         });
@@ -257,7 +302,7 @@ module.exports = {
             request.session.save(request.cookies.id, fails + 1, 'fails');
             csrf.makeToken(request).then((headers, token) => {
                 context.token = token;
-                resolve(context, request.settings.loginPage, headers);
+                resolve(context, settings.loginView, headers);
             });
         }
 
@@ -274,21 +319,24 @@ module.exports = {
                     if (users[user]) {
                         // See if the password is correct.
                         bcrypt.compare(pass, users[user].password, (err, success) => {
-                            // If the password is correct,
-                            if (success) {
 
-                                request.session.save(request.cookies.id, {
-                                    email: user,
-                                    role: users[user].role,
-                                    token: request.sess.token,
-                                    expires: request.sess.expires
-                                });
+                            handle(err).then(() => {
+                                // If the password is correct,
+                                if (success) {
 
-                                request.redirect(context.from);
-                            // Incorrect password
-                            } else {
-                                fail();
-                            }
+                                    request.session.save(request.cookies.id, {
+                                        email: user,
+                                        role: users[user].role,
+                                        token: request.sess.token,
+                                        expires: request.sess.expires
+                                    });
+
+                                    request.redirect(context.from);
+                                // Incorrect password
+                                } else {
+                                    fail();
+                                }
+                            });
                         });
                     // User does not exist
                     } else {
@@ -307,7 +355,7 @@ module.exports = {
 
             csrf.makeToken(request).then((headers, token) => {
                 context.token = token;
-                resolve(context, thisDir + '/views/login.mnla', headers);
+                resolve(context, settings.loginView, headers);
             });
         }
     }, 
@@ -320,7 +368,7 @@ module.exports = {
             className: 'admin', 
             loginPage: request.settings.loginPage,
             css: css
-        }, request.settings.logoutPage, { 'Set-Cookie': 'id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT' });
+        }, settings.logoutView, { 'Set-Cookie': 'id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT' });
     },
 
     '/error': function(resolve, error) {

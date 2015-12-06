@@ -9,7 +9,7 @@
 
 <div class="header">
     
-    <h1>Breadbox - {{collection}}</h1>
+    <h1>Breadbox - {{collection.name}}</h1>
 
     {{if saved}}
         <div class="msg saved">Saved!</div>
@@ -23,7 +23,7 @@
 
 </div>
 
-<form action="/admin/{{collection}}" method="post">
+<form action="/admin/{{collection.path}}" method="post">
 
     <input type="hidden" name="token" value="{{token}}" />
 

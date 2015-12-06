@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Breadbox</title>
-    <link href='http://fonts.googleapis.com/css?family=Lato:300,900' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Oxygen:300,700' rel='stylesheet' type='text/css'>
     <link href='/{{css}}/admin.css' rel='stylesheet' type='text/css'>
 </head>
 <body class="{{className}}">
@@ -23,11 +23,11 @@
 
 <div class="container">
 
-    <p><strong><a href="//mikej.codes/breadbox/docs" target="_blank">Here are the docs</a>.</strong></p>
+    <p><strong><a href="//mikej.codes/breadbox" target="_blank">Here are the docs</a>.</strong></p>
 
     <p>This is the default '/index' route. The template for this page has been moved to {{parent}}/views/breadbox-setup.html for you to view and edit if you want to.</p>
 
-    <p>If {{parent}}/ is not supposed to be the root directory for your project, make sure you've installed Breadbox in the <a href="//mikej.codes/breadbox/docs#getting-started" target="_blank">right location</a>.</p>
+    <p>If {{parent}}/ is not supposed to be the root directory for your project, make sure you've installed Breadbox in the <a href="//mikej.codes/breadbox#getting-started" target="_blank">right location</a>.</p>
 
     {{if noUsers}}
 
@@ -37,8 +37,8 @@
 
         <input type="hidden" name="token" value="{{token}}" />
 
-        <p>Username</p>
-        <input type="text" name="name"><br>
+        <p>Email Address</p>
+        <input type="text" name="email"><br>
 
         <p>Role</p>
         <input type="text" name="role" value="admin"><br>
@@ -52,6 +52,8 @@
         <input class="btn" type="submit" value="save" />
 
     </form>
+
+    {{endif}}
 
 </div>
 
@@ -86,8 +88,6 @@
     }
 
 </script>
-
-{{endif}}
 
 </body>
 

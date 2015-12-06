@@ -24,10 +24,10 @@
 </div>
 
 {{for collection in collections}}
-	{{if not (userRole !== 'admin' && collection === 'users') }}
+	{{if not (userRole !== 'admin' && collection.name === 'users') }}
 	<div class="collection clear">
-		<a class="btn" href="/admin/{{collection}}">{{collection}}</a>
-		<span class="btn delete right" data-collection="{{collection}}">Delete</span>
+		<a class="btn" href="/admin/{{collection.path}}">{{collection.name}}</a>
+		<span class="btn delete right" data-collection="{{collection.path}}">Delete</span>
 	</div>
 	{{endif}}
 {{endfor}}
@@ -41,7 +41,7 @@
 
 	$('#new-file').addEventListener('click', function() {
 		if ($('.input').value) {
-	        location.href = '/admin/new/' + $('.input').value.replace(/\.json$/i, '');
+	        location.href = '/admin/new/' + $('.input').value.replace(/\.json$/i, '').replace('/', '--');
 	        $('.input').classList.remove('error');
 	    } else {
 	    	$('.input').classList.add('error');

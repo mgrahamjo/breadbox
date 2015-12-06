@@ -126,7 +126,8 @@ input[type="submit"].error {
   color: white;
 }
 
-.msg {
+.admin .msg {
+  color: white;
 	position: absolute;
   width: 350px;
   left: 50%;
@@ -138,11 +139,6 @@ input[type="submit"].error {
   border-radius: 2px;
   -moz-border-radius: 2px;
   -webkit-border-radius: 2px;
-}
-
-.fail {
-  text-align: center;
-  color: #FF7A7A;
 }
 
 .saved {

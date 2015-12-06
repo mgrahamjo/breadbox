@@ -5,10 +5,13 @@ var fs = require('fs'),
     path = require('path'),
     csrf = require('./csrf'),
     thisDir = path.join(__dirname, '..'),
-    parentDir = path.join(__dirname, '../../..'),
+    parentDir = path.dirname(require.main.filename),
     css = path.join(__dirname, '../..').split(path.sep).pop() + '/breadbox/css',
     db = global.breadbox.db,
-    attempt = global.breadbox.attempt;
+    attempt = global.breadbox.attempt,
+    handle = global.breadbox.handle,
+    dataPath = path.join(parentDir, global.breadbox.settings.dataPath),
+    settings = global.breadbox.settings;
 
 module.exports = {
 
@@ -31,18 +34,16 @@ module.exports = {
 
                         var user = {};
 
-                        user[request.body.name] = {
+                        user[request.body.email] = {
                             password: passHash,
                             role: request.body.role
                         };
-
-                        console.log(user);
 
                         db.put('users', user).then(function (success) {
 
                             context.saved = success;
 
-                            resolve(context, parentDir + '/views/breadbox-setup.mnla');
+                            resolve(context, path.join(parentDir, settings.viewsPath, 'breadbox-setup.mnla'));
                         });
                     });
                 });
@@ -52,32 +53,41 @@ module.exports = {
 
                 context.error = 'Save failed.';
 
-                resolve(context, parentDir + '/views/breadbox-setup.mnla');
+                resolve(context, path.join(parentDir, settings.viewsPath, 'breadbox-setup.mnla'));
             });
 
             // GET
         } else {
+            (function () {
 
-            fs.exists(parentDir + '/views/breadbox-setup.mnla', function (exists) {
+                var breadboxSetupPath = path.join(parentDir, settings.viewsPath, 'breadbox-setup.mnla');
 
-                if (!exists) {
+                fs.exists(breadboxSetupPath, function (exists) {
 
-                    fs.readFile(thisDir + '/views/breadbox-setup.mnla', function (err, data) {
+                    if (!exists) {
 
-                        fs.writeFile(parentDir + '/views/breadbox-setup.mnla', data);
-                    });
-                }
+                        fs.readFile(thisDir + '/views/breadbox-setup.mnla', function (err, data) {
 
-                db.get('users').then(function (users) {
-
-                    if (!users) {
-                        context.noUsers = true;
-                        context.token = request.sess.token;
+                            fs.writeFile(breadboxSetupPath, data);
+                        });
                     }
 
-                    resolve(context, exists ? parentDir + '/views/breadbox-setup.mnla' : thisDir + '/views/breadbox-setup.mnla');
+                    db.get('users').then(function (users) {
+
+                        var customPath = exists ? breadboxSetupPath : thisDir + '/views/breadbox-setup.mnla';
+
+                        if (!users || Object.keys(users).length === 0) {
+                            context.noUsers = true;
+                            csrf.makeToken(request).then(function (headers, token) {
+                                context.token = token;
+                                resolve(context, customPath, headers);
+                            });
+                        } else {
+                            resolve(context, customPath);
+                        }
+                    });
                 });
-            });
+            })();
         }
     },
 
@@ -85,31 +95,62 @@ module.exports = {
 
         var collections = [];
 
-        fs.readdir(parentDir + '/models', function (err, files) {
+        function readDir(dir, outer) {
 
-            if (files) {
+            fs.readdir(dir, function (err, files) {
 
-                files.forEach(function (file, index) {
+                handle(err).then(function () {
 
-                    collections.push(file.replace('.json', ''));
+                    if (files) {
 
-                    if (index === files.length - 1) {
-                        resolve({
-                            collections: collections,
-                            className: 'admin',
-                            userRole: request.sess.role,
-                            css: css
+                        files.forEach(function (file, index) {
+
+                            var modelPath = path.join(dir, file);
+
+                            fs.lstat(modelPath, function (err, stats) {
+
+                                handle(err).then(function () {
+
+                                    if (stats.isDirectory()) {
+
+                                        readDir(modelPath);
+                                    } else {
+
+                                        var collection = path.relative(dataPath, modelPath).replace('.json', '');
+
+                                        collections.push({
+                                            name: collection,
+                                            path: collection.replace('/', '--')
+                                        });
+
+                                        if (outer === true && index === files.length - 1) {
+                                            resolve({
+                                                collections: collections,
+                                                className: 'admin',
+                                                userRole: request.sess.role,
+                                                css: css
+                                            });
+                                        }
+                                    }
+                                });
+                            });
                         });
                     }
                 });
-            }
-        });
+            });
+        }
+
+        readDir(dataPath, true);
     },
 
     '/admin/{{collection}}': function adminCollection(resolve, request) {
 
-        var context = {
-            collection: request.params.collection,
+        var collection = {
+            name: request.params.collection.replace('--', '/'),
+            path: request.params.collection
+        },
+            context = {
+            collection: collection,
             className: 'admin',
             token: request.sess.token,
             css: css
@@ -121,7 +162,7 @@ module.exports = {
 
                 context.json = JSON.parse(request.body.json);
 
-                db.put(request.params.collection, context.json).then(function () {
+                db.put(collection.name, context.json).then(function () {
 
                     context.json = JSON.stringify(context.json, null, 4);
 
@@ -133,7 +174,7 @@ module.exports = {
 
                 console.trace(err);
 
-                db.get(request.params.collection).then(function (data) {
+                db.get(collection.name).then(function (data) {
 
                     context.json = JSON.stringify(data, null, 4);
 
@@ -144,7 +185,7 @@ module.exports = {
             });
         } else {
 
-            db.get(request.params.collection).then(function (data) {
+            db.get(collection.name).then(function (data) {
 
                 context.json = JSON.stringify(data, null, 4);
 
@@ -155,21 +196,25 @@ module.exports = {
 
     '/admin/new/{{collection}}': function adminNewCollection(resolve, request) {
 
-        var context = {
-            collection: request.params.collection,
+        var collection = {
+            name: request.params.collection.replace('--', '/'),
+            path: request.params.collection
+        },
+            context = {
+            collection: collection,
             className: 'admin',
             token: request.sess.token,
             css: css
         };
 
-        fs.exists(parentDir + '/models/' + request.params.collection + '.json', function (exists) {
+        fs.exists(path.join(dataPath, collection.name, '.json'), function (exists) {
 
             if (exists) {
 
-                request.redirect('/admin/' + request.params.collection);
+                request.redirect('/admin/' + collection.path);
             } else {
 
-                db.put(request.params.collection, {}).then(function () {
+                db.put(collection.name, {}).then(function () {
 
                     resolve(context, thisDir + '/views/collection.mnla');
                 });
@@ -222,7 +267,7 @@ module.exports = {
 
     '/admin/delete/{{collection}}': function adminDeleteCollection(resolve, request) {
 
-        db.drop(request.params.collection).then(function () {
+        db.del(request.params.collection.replace('--', '/')).then(function () {
 
             request.redirect('/admin');
         });
@@ -251,7 +296,7 @@ module.exports = {
             request.session.save(request.cookies.id, fails + 1, 'fails');
             csrf.makeToken(request).then(function (headers, token) {
                 context.token = token;
-                resolve(context, request.settings.loginPage, headers);
+                resolve(context, settings.loginView, headers);
             });
         }
 
@@ -268,21 +313,24 @@ module.exports = {
                     if (users[user]) {
                         // See if the password is correct.
                         bcrypt.compare(pass, users[user].password, function (err, success) {
-                            // If the password is correct,
-                            if (success) {
 
-                                request.session.save(request.cookies.id, {
-                                    email: user,
-                                    role: users[user].role,
-                                    token: request.sess.token,
-                                    expires: request.sess.expires
-                                });
+                            handle(err).then(function () {
+                                // If the password is correct,
+                                if (success) {
 
-                                request.redirect(context.from);
-                                // Incorrect password
-                            } else {
-                                fail();
-                            }
+                                    request.session.save(request.cookies.id, {
+                                        email: user,
+                                        role: users[user].role,
+                                        token: request.sess.token,
+                                        expires: request.sess.expires
+                                    });
+
+                                    request.redirect(context.from);
+                                    // Incorrect password
+                                } else {
+                                    fail();
+                                }
+                            });
                         });
                         // User does not exist
                     } else {
@@ -301,7 +349,7 @@ module.exports = {
 
             csrf.makeToken(request).then(function (headers, token) {
                 context.token = token;
-                resolve(context, thisDir + '/views/login.mnla', headers);
+                resolve(context, settings.loginView, headers);
             });
         }
     },
@@ -314,7 +362,7 @@ module.exports = {
             className: 'admin',
             loginPage: request.settings.loginPage,
             css: css
-        }, request.settings.logoutPage, { 'Set-Cookie': 'id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT' });
+        }, settings.logoutView, { 'Set-Cookie': 'id=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT' });
     },
 
     '/error': function error(resolve, _error) {

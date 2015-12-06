@@ -17,7 +17,7 @@ url = require('url'),
 path = require('path'),
 
 // Our function that returns an interpolated template
-manila = require('manila')(),
+initManila = require('manila'),
 
 // Our promise implementation
 treaty = require('treaty'),
@@ -56,16 +56,25 @@ function breadbox(config) {
 
   // Parse settings
   var settings = {};
+  settings.cacheHtml = config.cacheHtml === undefined ? true : config.cacheHtml;
   settings.controllers = config.controllers || {};
   settings.loginPage = config.loginPage || '/login';
   settings.logoutPage = config.logoutPage || '/logout';
-  settings.cacheHtml = config.cacheHtml === undefined ? true : settings.cacheHtml;
   settings.cacheLength = config.cacheLength || 2419200; // 1 month cache
   settings.sessionLength = config.sessionLength || 600000; // 10 minute session
   settings.dataPath = config.dataPath || 'data';
+  settings.viewsPath = config.viewsPath || 'views';
+  settings.partialsPath = config.partialsPath || settings.viewsPath;
+  settings.loginView = config.loginView || path.join(__dirname, '../views/login.mnla');
+  settings.logoutView = config.logoutView || path.join(__dirname, '../views/logout.mnla');
 
   // Set up error handling
   var response = undefined;
+
+  var manila = initManila({
+    views: settings.viewsPath,
+    partials: settings.partialsPath
+  });
 
   var blooper = initBlooper(function (error) {
     var status = arguments[1] === undefined ? 500 : arguments[1];
@@ -74,7 +83,7 @@ function breadbox(config) {
       status: status,
       stack: error.stack || error
     };
-    console.error(error);
+    console.trace(error);
     manila(__dirname.replace('/dist', '/views/error.mnla'), errorData, function (err, template) {
       response.writeHead(status, { 'Content-Type': 'text/html; charset=UTF-8' });
       response.end(template);
@@ -99,13 +108,13 @@ function breadbox(config) {
   // CSRF depends on global.breadbox
   global.breadbox.csrf = require('./csrf');
 
-  // appRoutes depends on global.breadbox
-  var appRoutes = require('./routes');
+  // defaultRoutes depends on global.breadbox
+  var defaultRoutes = require('./routes');
 
   // Before crashing, save current sessions.
   process.on('uncaughtException', function (err) {
     fs.writeFile(basePath + 'models/session-dump.json', JSON.stringify(session.all()), function () {
-      console.error(err.stack);
+      console.trace(err);
       process.exit(1);
     });
   });
@@ -120,7 +129,7 @@ function breadbox(config) {
   // On start up, recover session data, if any.
   db.get('session-dump').then(function (data) {
     session.set(data);
-    db.drop('session-dump');
+    db.del('session-dump');
   });
 
   // Utility function for removing extra slashes in route strings.
@@ -272,7 +281,7 @@ function breadbox(config) {
   // to initialize the server
   function init() {
 
-    var urls = sortRoutes(settings.controllers, appRoutes);
+    var urls = sortRoutes(settings.controllers, defaultRoutes);
 
     http.createServer(function (req, res) {
 
@@ -284,10 +293,10 @@ function breadbox(config) {
       parsedUrl = url.parse(req.url, true),
 
       // pathname is the requested relative URL
-      pathname = parsedUrl.pathname,
+      pathname = parsedUrl.pathname.replace(/\/$/, ''),
 
       // relPath is (eventually) the path to the template, relative to the views/ folder
-      relPath = pathname === '/' ? '/index' : pathname,
+      relPath = pathname === '' ? '/index' : pathname,
 
       // routeName is the key we will use on the routes object to get the correct context
       routeName = relPath,
@@ -340,14 +349,16 @@ function breadbox(config) {
       // Re-route html requests to views folder.
       if (extension === '') {
         extension = '.html';
-        filepath += 'views' + relPath + '.html';
+        filepath = path.join(filepath, settings.viewsPath, relPath);
       } else if (extension === '.html') {
-        filepath += 'views' + relPath;
+        filepath = path.join(filepath, settings.viewsPath, relPath.replace('.html', ''));
       } else {
-        filepath += relPath;
+        filepath = path.join(filepath, relPath);
       }
 
-      filepath = fixDoubleSlashes(filepath).replace(/\.html$/, '.mnla');
+      if (extension === '.html') {
+        filepath += '.mnla';
+      }
 
       routeName = routeName.replace(/\.html$/, '');
 
@@ -359,7 +370,7 @@ function breadbox(config) {
 
         if (controller === undefined) {
           if (routeName === '/index') {
-            controller = appRoutes['/index'];
+            controller = defaultRoutes['/index'];
           } else {
             controller = controllers[routeName];
           }
@@ -368,8 +379,9 @@ function breadbox(config) {
             if (controller !== undefined) {
               authenticate = true;
             } else {
-              filepath = filepath.replace('/views', '/' + parentDir + '/breadbox/views');
-              controller = appRoutes[routeName];
+              var viewsPathWithSlashes = path.normalize('/' + settings.viewsPath + '/');
+              filepath = filepath.replace(viewsPathWithSlashes, '/' + parentDir + '/breadbox/views/');
+              controller = defaultRoutes[routeName];
               if (controller !== undefined) {
                 authenticate = true;
               } else {

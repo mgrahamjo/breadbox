@@ -21,7 +21,7 @@ breadbox({
 ```html
 <!-- index.html -->
 
-<h1>Hello, {{person}}!</h1>
+<h1>Hello, <<person>>!</h1>
 ```
 
 Run `node index` then open http://localhost:1337 in your browser.

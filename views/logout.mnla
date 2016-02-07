@@ -3,7 +3,7 @@
 <head>
     <title>Breadbox</title>
     <link href='https://fonts.googleapis.com/css?family=Oxygen:300,700' rel='stylesheet' type='text/css'>
-    <link href='/{{css}}/admin.css' rel='stylesheet' type='text/css'>
+    <link href='/<<css>>/admin.css' rel='stylesheet' type='text/css'>
 </head>
 <body class="admin">
 
@@ -17,7 +17,7 @@
 
 <p class="center"> You have been logged out. </p>
 
-<a class="btn login" href="{{loginPage}}">Log in</a>
+<a class="btn login" href="<<loginPage>>">Log in</a>
 
 </body>
 

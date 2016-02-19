@@ -29,7 +29,7 @@ session = require('./session'),
 formidable = require('formidable'),
 
 // regex for matching URLs that contain variables
-varRegx = /{{([\s\S]*?)}}/g,
+varRegx = /<<([\s\S]*?)>>/g,
 
 // the parent directory of /breadbox
 parentDir = path.join(__dirname, '../..').split('/').pop(),
@@ -269,7 +269,7 @@ function breadbox(config) {
 
     for (var i = 0; i < pathMatches.length; i++) {
 
-      keys[i] = keys[i].replace('{{', '').replace('}}', '');
+      keys[i] = keys[i].replace('<<', '').replace('>>', '');
 
       params[keys[i]] = pathMatches[i];
     }

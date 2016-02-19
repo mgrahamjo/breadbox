@@ -1,6 +1,6 @@
 # Breadbox
 
-Breadbox is an MVC framework for Node.js web apps. Breadbox favors functionality over flexibility, meaning you won't have to find and install middleware to make stuff work, but in some cases you can't plug in modules to replace core functionality.
+Breadbox is an MVC framework for Node.js web apps. Breadbox favors functionality over flexibility, meaning that it makes choices for you about how to fulfill common requirements.
 
 ## Hello World
 

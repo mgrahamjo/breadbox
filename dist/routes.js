@@ -143,7 +143,7 @@ module.exports = {
         readDir(dataPath, true);
     },
 
-    '/admin/{{collection}}': function adminCollection(resolve, request) {
+    '/admin/<<collection>>': function adminCollection(resolve, request) {
 
         var collection = {
             name: request.params.collection.replace('--', '/'),
@@ -194,7 +194,7 @@ module.exports = {
         }
     },
 
-    '/admin/new/{{collection}}': function adminNewCollection(resolve, request) {
+    '/admin/new/<<collection>>': function adminNewCollection(resolve, request) {
 
         var collection = {
             name: request.params.collection.replace('--', '/'),
@@ -265,7 +265,7 @@ module.exports = {
         }
     },
 
-    '/admin/delete/{{collection}}': function adminDeleteCollection(resolve, request) {
+    '/admin/delete/<<collection>>': function adminDeleteCollection(resolve, request) {
 
         db.del(request.params.collection.replace('--', '/')).then(function () {
 

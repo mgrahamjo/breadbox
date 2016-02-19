@@ -144,7 +144,7 @@ module.exports = {
         
     },
 
-    '/admin/{{collection}}': function(resolve, request) {
+    '/admin/<<collection>>': function(resolve, request) {
 
         let collection = {
             name: request.params.collection.replace('--', '/'),
@@ -197,7 +197,7 @@ module.exports = {
         }
     },
 
-    '/admin/new/{{collection}}': function(resolve, request) {
+    '/admin/new/<<collection>>': function(resolve, request) {
 
         let collection = {
             name: request.params.collection.replace('--', '/'),
@@ -271,7 +271,7 @@ module.exports = {
         }        
     },
 
-    '/admin/delete/{{collection}}': function(resolve, request) {
+    '/admin/delete/<<collection>>': function(resolve, request) {
 
         db.del(request.params.collection.replace('--', '/')).then(() => {
 

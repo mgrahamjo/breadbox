@@ -267,11 +267,11 @@ function breadbox(config) {
         response.end(data);
       }
 
-      if (customPath.toLowerCase() === 'json' || headers['Content-Type'] === 'application/json') {
+      if (customPath && customPath.toLowerCase() === 'json' || headers['Content-Type'] === 'application/json') {
 
         headers['Content-Type'] = 'application/json';
 
-        end(context);
+        end(JSON.stringify(context));
       } else {
 
         manila(customPath || filepath, context, function (err, template) {

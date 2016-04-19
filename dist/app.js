@@ -490,7 +490,7 @@ function breadbox(config) {
                 blooper.handle(err).then(function () {
 
                   res.writeHead(200, {
-                    'Content-Type': mime[extension],
+                    'Content-Type': mime[extension] || mime['.txt'],
                     'Cache-Control': 'max-age=' + settings.cacheLength
                   });
 

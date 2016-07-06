@@ -113,17 +113,27 @@ function breadbox(config) {
 
   // Before crashing, save current sessions.
   process.on('uncaughtException', function (err) {
-    fs.writeFile(basePath + 'models/session-dump.json', JSON.stringify(session.all()), function () {
-      console.trace(err.stack);
+    var allSessions = session.all();
+    console.trace(err.stack);
+    if (Object.keys(allSessions).length) {
+      fs.writeFile(basePath + 'models/session-dump.json', JSON.stringify(allSessions), function () {
+        process.exit(1);
+      });
+    } else {
       process.exit(1);
-    });
+    }
   });
 
   // Before interrupting the server manually, save current sessions.
   process.on('SIGINT', function () {
-    db.put('session-dump', session.all()).then(function () {
+    var allSessions = session.all();
+    if (Object.keys(allSessions).length) {
+      db.put('session-dump', allSessions).then(function () {
+        process.exit();
+      });
+    } else {
       process.exit();
-    });
+    }
   });
 
   // On start up, recover session data, if any.
@@ -248,17 +258,30 @@ function breadbox(config) {
     getContext(request, controller).then(function (context, customPath) {
       var headers = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
 
-      manila(customPath || filepath, context, function (err, template) {
+      function end(data) {
 
-        blooper.handle(err).then(function () {
+        var status = headers.status;
 
-          var status = headers.status;
+        response.writeHead(status || 200, mergeHeaders(headers));
 
-          response.writeHead(status || 200, mergeHeaders(headers));
+        response.end(data);
+      }
 
-          response.end(template);
+      if (customPath && customPath.toLowerCase() === 'json' || headers['Content-Type'] === 'application/json') {
+
+        headers['Content-Type'] = 'application/json';
+
+        end(JSON.stringify(context));
+      } else {
+
+        manila(customPath || filepath, context, function (err, template) {
+
+          blooper.handle(err).then(function () {
+
+            end(template);
+          });
         });
-      });
+      }
     });
   }
 
@@ -467,7 +490,7 @@ function breadbox(config) {
                 blooper.handle(err).then(function () {
 
                   res.writeHead(200, {
-                    'Content-Type': mime[extension],
+                    'Content-Type': mime[extension] || mime['.txt'],
                     'Cache-Control': 'max-age=' + settings.cacheLength
                   });
 

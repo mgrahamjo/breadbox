@@ -3,31 +3,31 @@
 <head>
     <title>Breadbox</title>
     <link href='https://fonts.googleapis.com/css?family=Oxygen:300,700' rel='stylesheet' type='text/css'>
-    <link href='/<<css>>/admin.css' rel='stylesheet' type='text/css'>
+    <link href='/<:css:>/admin.css' rel='stylesheet' type='text/css'>
 </head>
 <body class="admin">
 
 <div class="header">
     
-    <h1>Breadbox - <<collection.name>></h1>
+    <h1>Breadbox - <:collection.name:></h1>
 
-    <<if (typeof saved !== 'undefined') {>>
+    <:if (typeof saved !== 'undefined') {:>
         <div class="msg saved">Saved!</div>
-    <<}>>
+    <:}:>
 
-    <<if (typeof error !== 'undefined') {>>
-        <div class="msg error"><<error>></div>
-    <<}>>
+    <:if (typeof error !== 'undefined') {:>
+        <div class="msg error"><:error:></div>
+    <:}:>
 
     <a class="btn right" href="/admin">Back</a>
 
 </div>
 
-<form action="/admin/<<collection.path>>" method="post">
+<form action="/admin/<:collection.path:>" method="post">
 
-    <input type="hidden" name="token" value="<<token>>" />
+    <input type="hidden" name="token" value="<:token:>" />
 
-	<textarea name="json" width="100%" height="100%"><<json>></textarea>
+	<textarea name="json" width="100%" height="100%"><:json:></textarea>
 
 	<input class="btn" type="submit" value="save" />
 

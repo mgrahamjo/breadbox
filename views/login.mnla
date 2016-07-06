@@ -3,7 +3,7 @@
 <head>
     <title>Breadbox</title>
     <link href='https://fonts.googleapis.com/css?family=Oxygen:300,700' rel='stylesheet' type='text/css'>
-    <link href='/<<css>>/admin.css' rel='stylesheet' type='text/css'>
+    <link href='/<:css:>/admin.css' rel='stylesheet' type='text/css'>
 </head>
 <body class="admin">
 
@@ -11,22 +11,22 @@
 
 	<h1>Login</h1>
 
-	<< if (failed) { >>
+	<: if (failed) { :>
 		<div class="msg error">Wrong.</div>
-	<< } >>
+	<: } :>
 
 </div>
 
-<< if (typeof tooManyAttempts !== 'undefined') { >>
+<: if (typeof tooManyAttempts !== 'undefined') { :>
 	<p class="msg error">Too many failed login attempts. Try later.</p>
-<< } else { >>
-	<form action="/login?from=<<from>>" method="post" class="form">
+<: } else { :>
+	<form action="/login?from=<:from:>" method="post" class="form">
 
-		<< if (typeof multipleAttempts !== 'undefined') { >>
+		<: if (typeof multipleAttempts !== 'undefined') { :>
 			<p class="fail">You will be temporarily blocked after 5 failed login attempts.</p>
-		<< } >>
+		<: } :>
 
-		<input type="hidden" name="token" value="<<token>>">
+		<input type="hidden" name="token" value="<:token:>">
 
 		<p>Email</p>
 		<input name="email" type="text"><br>
@@ -37,7 +37,7 @@
 		<input type="submit" value="log in">
 
 	</form>
-<< } >>
+<: } :>
 
 <script>
 

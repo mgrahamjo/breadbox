@@ -3,7 +3,7 @@
 <head>
     <title>Breadbox</title>
     <link href='https://fonts.googleapis.com/css?family=Oxygen:300,700' rel='stylesheet' type='text/css'>
-    <link href='/<<css>>/admin.css' rel='stylesheet' type='text/css'>
+    <link href='/<:css:>/admin.css' rel='stylesheet' type='text/css'>
 </head>
 <body class="admin">
 
@@ -11,13 +11,13 @@
     
     <h1>Breadbox</h1>
 
-    <<if (typeof saved !== 'undefined') {>>
+    <:if (typeof saved !== 'undefined') {:>
         <div class="msg saved">Saved!</div>
-    <<}>>
+    <:}:>
 
-    <<if (typeof error !== 'undefined') {>>
-        <div class="msg error"><<error>></div>
-    <<}>>
+    <:if (typeof error !== 'undefined') {:>
+        <div class="msg error"><:error:></div>
+    <:}:>
 
     <a class="btn right" href="/admin">Back</a>
 
@@ -25,7 +25,7 @@
 
 <form action="/admin/new-user" method="post" onsubmit="return validate()" class="form">
 
-    <input type="hidden" name="token" value="<<token>>" />
+    <input type="hidden" name="token" value="<:token:>" />
 
     <p>Email</p>
     <input type="text" name="email"><br>

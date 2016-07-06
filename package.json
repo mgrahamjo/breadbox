@@ -1,6 +1,6 @@
 {
   "name": "breadbox",
-  "version": "0.0.7",
+  "version": "0.1.0",
   "description": "A Node MVC framework that does more with less.",
   "main": "dist/app.js",
   "scripts": {
@@ -19,7 +19,7 @@
     "blooper": "0.0.2",
     "formidable": "^1.0.17",
     "jdrop": "0.0.5",
-    "manila": "2.0.1",
+    "manila": "2.2.2",
     "treaty": "0.0.2"
   }
 }

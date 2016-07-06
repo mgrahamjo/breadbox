@@ -3,7 +3,7 @@
 <head>
     <title>Breadbox</title>
     <link href="https://fonts.googleapis.com/css?family=Oxygen:300,700" rel="stylesheet" type="text/css">
-    <link href="/<<css>>/admin.css" rel="stylesheet" type="text/css">
+    <link href="/<:css:>/admin.css" rel="stylesheet" type="text/css">
 </head>
 <body class="admin">
 
@@ -13,9 +13,9 @@
 
 	<a class="btn right" href="/logout">Log out</a>
 
-	<<if (userRole === 'admin') {>>
+	<:if (userRole === 'admin') {:>
 		<a class="btn right" id="new-user">+ Add User</a>
-	<<}>>
+	<:}:>
 
 	<a class="btn right saved" id="new-file">+ Add File</a>
 
@@ -23,14 +23,14 @@
 
 </div>
 
-<<collections.forEach(function(collection) {>>
-	<<if (!(userRole !== 'admin' && collection.name === 'users')) { >>
+<:collections.forEach(function(collection) {:>
+	<:if (!(userRole !== 'admin' && collection.name === 'users')) { :>
 	<div class="collection clear">
-		<a class="btn" href="/admin/<<collection.path>>"><<collection.name>></a>
-		<span class="btn delete right" data-collection="<<collection.path>>">Delete</span>
+		<a class="btn" href="/admin/<:collection.path:>"><:collection.name:></a>
+		<span class="btn delete right" data-collection="<:collection.path:>">Delete</span>
 	</div>
-	<<}>>
-<<})>>
+	<:}:>
+<:}):>
 
 <script>
 
@@ -48,11 +48,11 @@
 	    }
     });
 
-	<<if (userRole === 'admin') {>>
+	<:if (userRole === 'admin') {:>
     $('#new-user').addEventListener('click', function() {
         location.href = '/admin/new-user';
     });
-    <<}>>
+    <:}:>
 
     $('.delete').forEach(function(el) {
     	el.addEventListener('click', function(e) {

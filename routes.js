@@ -94,57 +94,47 @@ module.exports = {
 
         let collections = [];
 
-        function readDir(dir, outer) {
+        function readDir(dir, totalFileCount) {
 
-            fs.readdir(dir, (err, files) => {
+            let files = fs.readdirSync(dir);
 
-                handle(err).then(() => {
+            if (files) {
 
-                    if (files) {
+                files.forEach(file => {
 
-                        files.forEach((file, index) => {
+                    let modelPath = path.join(dir, file),
 
-                            let modelPath = path.join(dir, file);
+                        stats = fs.lstatSync(modelPath);
 
-                            fs.lstat(modelPath, (err, stats) => {
+                    if (stats.isDirectory()) {
 
-                                handle(err).then(() => {
+                        readDir(modelPath, totalFileCount);
 
-                                    if (stats.isDirectory()) {
+                    } else if (file !== '.DS_Store') {
 
-                                        readDir(modelPath);
+                        let collection = path.relative(dataPath, modelPath).replace('.json', '');
 
-                                    } else {
-
-                                        let collection = path.relative(dataPath, modelPath).replace('.json', '');
-
-                                        collections.push({
-                                            name: collection,
-                                            path: collection.replace('/', '--')
-                                        });
-
-                                        if (outer === true && index === files.length - 1) {
-                                            resolve({
-                                                collections: collections,
-                                                className: 'admin',
-                                                userRole: request.sess.role,
-                                                css: css
-                                            });
-                                        }
-                                    }
-                                });
-                            });
+                        collections.push({
+                            name: collection,
+                            path: collection.replace('/', '--')
                         });
                     }
                 });
-            });
+            }
         }
 
-        readDir(dataPath, true);
+        readDir(dataPath);
+
+        resolve({
+            collections: collections,
+            className: 'admin',
+            userRole: request.sess.role,
+            css: css
+        });
         
     },
 
-    '/admin/<<collection>>': function(resolve, request) {
+    '/admin/<:collection:>': function(resolve, request) {
 
         let collection = {
             name: request.params.collection.replace('--', '/'),
@@ -197,7 +187,7 @@ module.exports = {
         }
     },
 
-    '/admin/new/<<collection>>': function(resolve, request) {
+    '/admin/new/<:collection:>': function(resolve, request) {
 
         let collection = {
             name: request.params.collection.replace('--', '/'),
@@ -271,7 +261,7 @@ module.exports = {
         }        
     },
 
-    '/admin/delete/<<collection>>': function(resolve, request) {
+    '/admin/delete/<:collection:>': function(resolve, request) {
 
         db.del(request.params.collection.replace('--', '/')).then(() => {
 

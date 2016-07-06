@@ -3,21 +3,21 @@
 <head>
     <title>Breadbox</title>
     <link href='https://fonts.googleapis.com/css?family=Oxygen:300,700' rel='stylesheet' type='text/css'>
-    <link href='/<<css>>/admin.css' rel='stylesheet' type='text/css'>
+    <link href='/<:css:>/admin.css' rel='stylesheet' type='text/css'>
 </head>
-<body class="<<className>>">
+<body class="<:className:>">
 
 <div class="header">
     
     <h1>Welcome to Breadbox.</h1>
 
-    <<if saved>>
+    <:if saved:>
         <div class="msg saved">Saved!</div>
-    <<endif>>
+    <:endif:>
 
-    <<if error>>
-        <div class="msg error"><<error>></div>
-    <<endif>>
+    <:if error:>
+        <div class="msg error"><:error:></div>
+    <:endif:>
 
 </div>
 
@@ -25,17 +25,17 @@
 
     <p><strong><a href="//mikej.codes/breadbox" target="_blank">Here are the docs</a>.</strong></p>
 
-    <p>This is the default '/index' route. The template for this page has been moved to <<parent>>/views/breadbox-setup.html for you to view and edit if you want to.</p>
+    <p>This is the default '/index' route. The template for this page has been moved to <:parent:>/views/breadbox-setup.html for you to view and edit if you want to.</p>
 
-    <p>If <<parent>>/ is not supposed to be the root directory for your project, make sure you've installed Breadbox in the <a href="//mikej.codes/breadbox#getting-started" target="_blank">right location</a>.</p>
+    <p>If <:parent:>/ is not supposed to be the root directory for your project, make sure you've installed Breadbox in the <a href="//mikej.codes/breadbox#getting-started" target="_blank">right location</a>.</p>
 
-    <<if (typeof noUsers !== 'undefined') {>>
+    <:if (typeof noUsers !== 'undefined') {:>
 
     <p><strong>You haven't created any users yet.</strong> If you plan to use authentication, including for your own access to the <a href="/admin">breadbox admin interface</a>, create a user now:</p>
 
     <form action="/" method="post" onsubmit="return validate()" class="form">
 
-        <input type="hidden" name="token" value="<<token>>" />
+        <input type="hidden" name="token" value="<:token:>" />
 
         <p>Email Address</p>
         <input type="text" name="email"><br>
@@ -53,7 +53,7 @@
 
     </form>
 
-    <<}>>
+    <:}:>
 
 </div>
 
